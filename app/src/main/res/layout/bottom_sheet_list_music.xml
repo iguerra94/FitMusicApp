@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/linearLayout"
+    android:layout_width="match_parent"
+    android:layout_height="?attr/actionBarSize"
+    android:layout_marginBottom="?attr/actionBarSize"
+    android:background="@color/colorWhite"
+    android:elevation="@dimen/dim_bottom_sheet_elevation"
+    android:orientation="horizontal"
+    app:behavior_peekHeight="?attr/actionBarSize"
+    app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/songCoverImageViewListMusic"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center"
+        android:layout_marginStart="@dimen/activity_vertical_margin"
+        android:layout_marginEnd="@dimen/activity_vertical_margin"
+        app:srcCompat="@drawable/ic_av_timer" />
+
+    <LinearLayout
+        android:id="@+id/linearLayoutListMusic"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/songTitleTextViewListMusic"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="start|bottom"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:text="Creo" />
+
+        <TextView
+            android:id="@+id/songArtistTextViewListMusic"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="start|top"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:text="Ulises Bueno" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/songProgressDurationTextViewListMusic"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:gravity="center"
+        android:text="00:00"
+        android:textSize="14sp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_marginHorizontal="4dp"
+        android:gravity="center"
+        android:text="/"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/songTotalDurationTextViewListMusic"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:background="@android:color/transparent"
+        android:gravity="center"
+        android:text="03:14"
+        app:srcCompat="@drawable/ic_step_backward_solid" />
+
+</LinearLayout>

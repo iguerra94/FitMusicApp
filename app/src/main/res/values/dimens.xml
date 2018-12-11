@@ -1,0 +1,18 @@
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="dim_toolbar_elevation">4dp</dimen>
+    <dimen name="dim_bottom_sheet_elevation">8dp</dimen>
+    <dimen name="bottom_sheet_top_radius_dim">8dp</dimen>
+    <dimen name="btn_rounded_radius_dim">24dp</dimen>
+    <dimen name="list_view_divider_height">1dp</dimen>
+    <dimen name="text_size_36_sp">36sp</dimen>
+    <dimen name="dim_200_dp">200dp</dimen>
+    <dimen name="dim_60_dp">60dp</dimen>
+    <dimen name="dim_bottom_nav_view_height">56dp</dimen>
+    <dimen name="dim_splash_logo">100dp</dimen>
+    <dimen name="dim_circle_image_view">40dp</dimen>
+    <dimen name="dim_20_dp">20dp</dimen>
+    <dimen name="dim_btn_play_pause">28dp</dimen>
+</resources>

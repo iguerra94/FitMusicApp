@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/icon_last_race"
+        android:icon="@drawable/ic_timeline"
+        android:title="@string/nav_item_last_race" />
+    <item
+        android:id="@+id/icon_new_race"
+        android:icon="@drawable/ic_add"
+        android:title="@string/nav_item_new_race" />
+    <item
+        android:id="@+id/icon_list_races"
+        android:icon="@drawable/ic_format_list_bulleted"
+        android:title="@string/nav_item_races_list" />
+</menu>

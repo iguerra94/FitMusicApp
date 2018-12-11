@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "595745958708",
+    "firebase_url": "https://fitmusic-af1fe.firebaseio.com",
+    "project_id": "fitmusic-af1fe",
+    "storage_bucket": "fitmusic-af1fe.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:595745958708:android:8eceb87e6ad7b0e6",
+        "android_client_info": {
+          "package_name": "com.tecnologiasmoviles.iua.fitmusic"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "595745958708-22iagpm5o8d9vp01e818rmd9e232vnlu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tecnologiasmoviles.iua.fitmusic",
+            "certificate_hash": "c54f0b28929ebb2a26513a5dc21c3a4f4168ee89"
+          }
+        },
+        {
+          "client_id": "595745958708-4lt0chlmim8g5pe2dtt01qrj49trr2ki.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXwj0Hdm1Sh_afnP_p8q0wdXi_K6fMD_w"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "595745958708-4lt0chlmim8g5pe2dtt01qrj49trr2ki.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

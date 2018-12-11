@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/linearLayout"
+    android:layout_width="match_parent"
+    android:layout_height="?attr/actionBarSize"
+    android:layout_marginBottom="?attr/actionBarSize"
+    android:background="@color/colorWhite"
+    android:elevation="@dimen/dim_bottom_sheet_elevation"
+    android:orientation="horizontal"
+    app:behavior_peekHeight="?attr/actionBarSize"
+    app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/songCoverImageViewNewRace"
+        android:layout_width="@dimen/dim_circle_image_view"
+        android:layout_height="@dimen/dim_circle_image_view"
+        android:layout_gravity="center"
+        android:layout_marginStart="@dimen/activity_vertical_margin"
+        android:layout_marginEnd="@dimen/activity_vertical_margin"
+        app:srcCompat="@drawable/ic_running" />
+
+    <LinearLayout
+        android:id="@+id/llNewRace"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/songTitleTextViewNewRace"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="start|bottom"
+            android:maxLines="1"
+            android:singleLine="true"
+            />
+
+        <TextView
+            android:id="@+id/songArtistTextViewNewRace"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="start|top"
+            android:maxLines="1"
+            android:singleLine="true"
+            />
+
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/btnStepBackwardNewRace"
+        android:layout_width="@dimen/dim_20_dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:layout_marginEnd="@dimen/dim_20_dp"
+        android:background="@android:color/transparent"
+        app:srcCompat="@drawable/ic_step_backward_solid" />
+
+    <ImageButton
+        android:id="@+id/btnPlayPauseNewRace"
+        android:layout_width="@dimen/dim_btn_play_pause"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:layout_marginEnd="@dimen/dim_20_dp"
+        android:background="@android:color/transparent"
+        app:srcCompat="@drawable/ic_play_solid" />
+
+    <ImageButton
+        android:id="@+id/btnStepForwardNewRace"
+        android:layout_width="@dimen/dim_20_dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:background="@android:color/transparent"
+        app:srcCompat="@drawable/ic_step_forward_solid" />
+
+</LinearLayout>

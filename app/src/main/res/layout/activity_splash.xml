@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorPrimary"
+    android:theme="@style/Theme.AppCompat.NoActionBar"
+    tools:context=".view.SplashActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/imageViewLogo"
+            android:layout_width="@dimen/dim_splash_logo"
+            android:layout_height="@dimen/dim_splash_logo"
+            android:src="@drawable/fit_music_logo" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/fugaz_one_regular"
+            android:gravity="center"
+            android:text="@string/app_name"
+            android:textColor="@color/colorMaterialGrey900"
+            android:textSize="@dimen/text_size_36_sp" />
+
+    </LinearLayout>
+
+    <Button
+        android:layout_width="@dimen/dim_200_dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="@dimen/dim_60_dp"
+        android:background="@drawable/btn_rounded"
+        android:onClick="goToMainActivity"
+        android:text="@string/btn_splash_text"
+        android:textColor="@color/colorPrimary" />
+
+</RelativeLayout>
