@@ -1,25 +1,26 @@
 package com.tecnologiasmoviles.iua.fitmusic.model;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 public class Punto implements Serializable {
-    private int id_punto;
+    private UUID id_punto;
     private double lat;
     private double lon;
 
     public Punto() {}
 
-    public Punto(int id_punto, double lat, double lon) {
+    public Punto(UUID id_punto, double lat, double lon) {
         this.id_punto = id_punto;
         this.lat = lat;
         this.lon = lon;
     }
 
-    public int getId_punto() {
+    public UUID getIdPunto() {
         return id_punto;
     }
 
-    public void setId_punto(int id_punto) {
+    public void setIdPunto(UUID id_punto) {
         this.id_punto = id_punto;
     }
 
@@ -41,6 +42,6 @@ public class Punto implements Serializable {
 
     @Override
     public String toString() {
-        return "id_punto: " + id_punto + ", lat: " + lat + ", lon: " + lon;
+        return "(id_punto: " + id_punto + ", lat: " + lat + ", lon: " + lon + ")";
     }
 }

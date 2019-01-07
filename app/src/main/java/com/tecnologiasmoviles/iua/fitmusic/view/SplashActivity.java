@@ -3,9 +3,7 @@ package com.tecnologiasmoviles.iua.fitmusic.view;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -13,15 +11,15 @@ import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 
-import com.facebook.CallbackManager;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
-import com.tecnologiasmoviles.iua.fitmusic.BuildConfig;
 import com.tecnologiasmoviles.iua.fitmusic.R;
+import com.tecnologiasmoviles.iua.fitmusic.utils.SharedPrefsKeys;
+import com.tecnologiasmoviles.iua.fitmusic.utils.SharedPrefsManager;
 
 import org.json.JSONArray;
 
@@ -43,16 +41,11 @@ public class SplashActivity extends AppCompatActivity {
 
     private static final String LOG_TAG = SplashActivity.class.getSimpleName();
 
-    private static final String REGISTRATION_TOKEN_KEY = "registration_token";
-    private static final String APP_IS_OPENED_KEY = "app_is_opened";
-
     private String[] permissions = {
         Manifest.permission.READ_EXTERNAL_STORAGE,
         Manifest.permission.WRITE_EXTERNAL_STORAGE,
         Manifest.permission.INTERNET
     };
-
-    CallbackManager callbackManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,8 +55,8 @@ public class SplashActivity extends AppCompatActivity {
         try {
             File file = new File(getFilesDir(), "races_data.json");
             createFileIfNotExists(file);
-            initializeIdSongToSharedPreferences(getString(R.string.id_song_key));
-            initializeIsRunningVariableToSharedPreferences("is_running");
+            SharedPrefsManager.getInstance(this).saveInt(SharedPrefsKeys.ID_SONG_KEY, -1);
+            SharedPrefsManager.getInstance(this).saveBoolean(SharedPrefsKeys.IS_RUNNING_KEY, false);
         } catch (IOException e1) {
             e1.printStackTrace();
         }
@@ -90,7 +83,7 @@ public class SplashActivity extends AppCompatActivity {
 //                    goToMainActivity(this.getCurrentFocus());
 //                }
             } else {
-                boolean appIsOpened = readAppIsOpenedFromSharedPreferences();
+                boolean appIsOpened = SharedPrefsManager.getInstance(this).readBoolean(SharedPrefsKeys.APP_IS_OPENED_KEY);
 
                 if (appIsOpened) {
                     Log.d(LOG_TAG, "appIsOpened: " + appIsOpened);
@@ -127,26 +120,6 @@ public class SplashActivity extends AppCompatActivity {
         }
     }
 
-    private void initializeIdSongToSharedPreferences(String key) {
-        SharedPreferences sharedPref = getSharedPreferences(
-                BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
-
-        SharedPreferences.Editor editor = sharedPref.edit();
-
-        editor.putInt(key, -1);
-        editor.apply();
-    }
-
-    private void initializeIsRunningVariableToSharedPreferences(String key) {
-        SharedPreferences sharedPref = getSharedPreferences(
-                BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
-
-        SharedPreferences.Editor editor = sharedPref.edit();
-
-        editor.putBoolean(key, false);
-        editor.apply();
-    }
-
     private void createRegistrationToken() {
         FirebaseInstanceId.getInstance().getInstanceId()
                 .addOnSuccessListener(instanceIdResult -> {
@@ -162,20 +135,8 @@ public class SplashActivity extends AppCompatActivity {
                     }
 
                     saveRegistrationTokenToExternalStorage(newToken);
-                    saveRegistrationTokenToSharedPreferences(newToken);
+                    SharedPrefsManager.getInstance(this).saveString(SharedPrefsKeys.REGISTRATION_TOKEN_KEY, newToken);
                 });
-    }
-
-    private void saveRegistrationTokenToSharedPreferences(String registrationToken) {
-        SharedPreferences sharedPref = getSharedPreferences(
-                BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
-
-        SharedPreferences.Editor editor = sharedPref.edit();
-
-        editor.putString(REGISTRATION_TOKEN_KEY, registrationToken);
-        editor.apply();
-
-        Log.d(LOG_TAG, "Save to SP success!");
     }
 
     private String readRegistrationTokenFromExternalStorage() {
@@ -183,7 +144,7 @@ public class SplashActivity extends AppCompatActivity {
 
         try {
             File regTokenFile = new File(Environment.getExternalStoragePublicDirectory(
-                    Environment.DIRECTORY_DOCUMENTS), "registration_token.txt");
+                    Environment.DIRECTORY_DOWNLOADS), "registration_token.txt");
 
             if (regTokenFile.exists()) {
                 FileInputStream fis = new FileInputStream(regTokenFile);
@@ -259,15 +220,6 @@ public class SplashActivity extends AppCompatActivity {
         });
     }
 
-    private boolean readAppIsOpenedFromSharedPreferences() {
-        SharedPreferences sharedPref = getSharedPreferences(
-                BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
-
-        return sharedPref.getBoolean(
-                APP_IS_OPENED_KEY,
-                false);
-    }
-
     @RequiresApi(api = Build.VERSION_CODES.M)
     private boolean arePermissionsEnabled(){
         for(String permission : permissions){
@@ -310,7 +262,7 @@ public class SplashActivity extends AppCompatActivity {
             //all is good, continue flow
             createRegistrationToken();
 
-            boolean appIsOpened = readAppIsOpenedFromSharedPreferences();
+            boolean appIsOpened = SharedPrefsManager.getInstance(this).readBoolean(SharedPrefsKeys.APP_IS_OPENED_KEY);
 
             if (appIsOpened) {
                 Log.d(LOG_TAG, "appIsOpened: " + appIsOpened);

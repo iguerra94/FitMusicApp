@@ -1,11 +1,6 @@
 package com.tecnologiasmoviles.iua.fitmusic.view;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import de.hdodenhof.circleimageview.CircleImageView;
-
 import android.content.ContentResolver;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
@@ -19,10 +14,11 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.tecnologiasmoviles.iua.fitmusic.BuildConfig;
 import com.tecnologiasmoviles.iua.fitmusic.R;
 import com.tecnologiasmoviles.iua.fitmusic.model.Song;
 import com.tecnologiasmoviles.iua.fitmusic.utils.MediaPlayerManager;
+import com.tecnologiasmoviles.iua.fitmusic.utils.SharedPrefsKeys;
+import com.tecnologiasmoviles.iua.fitmusic.utils.SharedPrefsManager;
 import com.tecnologiasmoviles.iua.fitmusic.utils.SongsAdapter;
 import com.tecnologiasmoviles.iua.fitmusic.utils.TimeUtils;
 
@@ -30,14 +26,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import de.hdodenhof.circleimageview.CircleImageView;
+
 public class ListMusicActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private static final String LOG_TAG = ListMusicActivity.class.getSimpleName();
 
     private MediaPlayerManager mediaPlayerManager;
-
-    private static final String ID_SONG_KEY = "id_song";
-    private static final String SONG_FINISHED_KEY = "song_finished";
 
     List<Song> songList;
 
@@ -56,8 +53,6 @@ public class ListMusicActivity extends AppCompatActivity implements SharedPrefer
     private static long currentDurationGlobal;
     private static long totalDuration;
 
-    private SharedPreferences sharedPref;
-
     private Handler mHandler = new Handler();
 
     @Override
@@ -74,7 +69,7 @@ public class ListMusicActivity extends AppCompatActivity implements SharedPrefer
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         idSong = -1;
-        idLastSong = readIdSongFromSharedPreferences(getString(R.string.id_song_key));
+        idLastSong = SharedPrefsManager.getInstance(this).readInt(SharedPrefsKeys.ID_SONG_KEY);
 
         Log.d(LOG_TAG, "idSong: " + idSong + ", idLastSong: " + idLastSong);
 
@@ -88,50 +83,10 @@ public class ListMusicActivity extends AppCompatActivity implements SharedPrefer
 
         mediaPlayerManager = MediaPlayerManager.getInstance();
         mediaPlayerManager.create();
-//        mediaPlayerManager.getMediaPlayer().setOnCompletionListener(this);
 
         doStuff();
 
-        sharedPref = getSharedPreferences(BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
-        sharedPref.registerOnSharedPreferenceChangeListener(this);
-    }
-
-    private int readIdSongFromSharedPreferences(String key) {
-        SharedPreferences sharedPref = getSharedPreferences(
-                BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
-
-        return sharedPref.getInt(
-                key,
-                getResources().getInteger(R.integer.id_song_default_value));
-    }
-
-    private void saveIdSongToSharedPreferences(String key, int value) {
-        SharedPreferences sharedPref = getSharedPreferences(
-                BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
-
-        SharedPreferences.Editor editor = sharedPref.edit();
-
-        editor.putInt(key, value);
-        editor.apply();
-    }
-
-    private boolean readSongFinishedFromSharedPreferences(String key) {
-        SharedPreferences sharedPref = getSharedPreferences(
-                BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
-
-        return sharedPref.getBoolean(
-                key,
-                false);
-    }
-
-    private void saveSongFinishedVariableToSharedPreferences(String key, boolean value) {
-        SharedPreferences sharedPref = getSharedPreferences(
-                BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
-
-        SharedPreferences.Editor editor = sharedPref.edit();
-
-        editor.putBoolean(key, value);
-        editor.apply();
+        SharedPrefsManager.getInstance(this).getSharedPrefs().registerOnSharedPreferenceChangeListener(this);
     }
 
     public void doStuff() {
@@ -148,7 +103,7 @@ public class ListMusicActivity extends AppCompatActivity implements SharedPrefer
     }
 
     private void updateCurrentSongUI() {
-        int id = readIdSongFromSharedPreferences(ID_SONG_KEY);
+        int id = SharedPrefsManager.getInstance(this).readInt(SharedPrefsKeys.ID_SONG_KEY);
 
         Log.d(LOG_TAG, "ID: " + id);
 
@@ -242,51 +197,6 @@ public class ListMusicActivity extends AppCompatActivity implements SharedPrefer
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (key.equals(ID_SONG_KEY)) {
-            updateCurrentSongUI();
-
-            int id = readIdSongFromSharedPreferences(ID_SONG_KEY);
-            idSong = songList.get(id-1).getId();
-
-            Log.d(LOG_TAG, "idSong: " + id + ", idLastSong: " + idLastSong);
-
-            Uri uri = Uri.parse(songList.get(id-1).getSongUri());
-
-            try {
-                if (idLastSong != idSong) {
-                    if (mediaPlayerManager.getMediaPlayer() != null) {
-                        mediaPlayerManager.getMediaPlayer().stop();
-                        mediaPlayerManager.getMediaPlayer().release();
-                        mediaPlayerManager.setMediaPlayer(null);
-                    }
-                }
-
-                mediaPlayerManager.create();
-                mediaPlayerManager.getMediaPlayer().setDataSource(this, uri);
-                mediaPlayerManager.setDataSource(uri);
-                mediaPlayerManager.getMediaPlayer().prepare();
-                mediaPlayerManager.play();
-
-                idLastSong = readIdSongFromSharedPreferences(getString(R.string.id_song_key));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-//        else if (key.equals(SONG_FINISHED_KEY)) {
-//            boolean songFinished = readSongFinishedFromSharedPreferences(SONG_FINISHED_KEY);
-//
-//            Log.d(LOG_TAG, "songFinished: " + songFinished);
-//
-//            if (songFinished) {
-//                Log.d(LOG_TAG, "Song finished..");
-//                stepForward();
-//                saveSongFinishedVariableToSharedPreferences(SONG_FINISHED_KEY, false);
-//            }
-//        }
-    }
-
     public void updateCurrentDurationTextView() {
         mHandler.postDelayed(mUpdateTimeTask, 100);
     }
@@ -318,25 +228,23 @@ public class ListMusicActivity extends AppCompatActivity implements SharedPrefer
     protected void onResume() {
         super.onResume();
         updateCurrentSongUI();
-        sharedPref.registerOnSharedPreferenceChangeListener(this);
+        SharedPrefsManager.getInstance(this).getSharedPrefs().registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        sharedPref.unregisterOnSharedPreferenceChangeListener(this);
+        SharedPrefsManager.getInstance(this).getSharedPrefs().unregisterOnSharedPreferenceChangeListener(this);
     }
 
     public void stepForward() {
-        int id = readIdSongFromSharedPreferences(ID_SONG_KEY) + 1;
+        int id = SharedPrefsManager.getInstance(this).readInt(SharedPrefsKeys.ID_SONG_KEY) + 1;
 
         Log.d(LOG_TAG, "ID: " + id);
         if (id > 0) {
             int idSongNext = id <= songList.size() ? songList.get(id - 1).getId() : 1;
 
-            saveIdSongToSharedPreferences(
-                    getString(R.string.id_song_key),
-                    idSongNext);
+            SharedPrefsManager.getInstance(this).saveInt(SharedPrefsKeys.ID_SONG_KEY, idSongNext);
 
             if (mediaPlayerManager.getMediaPlayer() != null) {
                 mediaPlayerManager.getMediaPlayer().stop();
@@ -366,4 +274,50 @@ public class ListMusicActivity extends AppCompatActivity implements SharedPrefer
         super.onDestroy();
         Log.d(LOG_TAG, "onDestroy: List");
     }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (key.equals(SharedPrefsKeys.ID_SONG_KEY)) {
+            updateCurrentSongUI();
+
+            int id = SharedPrefsManager.getInstance(this).readInt(SharedPrefsKeys.ID_SONG_KEY);
+            idSong = songList.get(id-1).getId();
+
+            Log.d(LOG_TAG, "idSong: " + id + ", idLastSong: " + idLastSong);
+
+            Uri uri = Uri.parse(songList.get(id-1).getSongUri());
+
+            try {
+                if (idLastSong != idSong) {
+                    if (mediaPlayerManager.getMediaPlayer() != null) {
+                        mediaPlayerManager.getMediaPlayer().stop();
+                        mediaPlayerManager.getMediaPlayer().release();
+                        mediaPlayerManager.setMediaPlayer(null);
+                    }
+                }
+
+                mediaPlayerManager.create();
+                mediaPlayerManager.getMediaPlayer().setDataSource(this, uri);
+                mediaPlayerManager.setDataSource(uri);
+                mediaPlayerManager.getMediaPlayer().prepare();
+                mediaPlayerManager.play();
+
+                idLastSong = SharedPrefsManager.getInstance(this).readInt(SharedPrefsKeys.ID_SONG_KEY);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+//        else if (key.equals(SONG_FINISHED_KEY)) {
+//            boolean songFinished = readSongFinishedFromSharedPreferences(SONG_FINISHED_KEY);
+//
+//            Log.d(LOG_TAG, "songFinished: " + songFinished);
+//
+//            if (songFinished) {
+//                Log.d(LOG_TAG, "Song finished..");
+//                stepForward();
+//                saveSongFinishedVariableToSharedPreferences(SONG_FINISHED_KEY, false);
+//            }
+//        }
+    }
+
 }

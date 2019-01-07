@@ -28,16 +28,10 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:gravity="center_horizontal"
-            android:text="Compartiendo carrera en"
+            android:text="Registrando carrera..."
             android:layout_marginEnd="8dp"
             android:textColor="@color/colorWhite"
             android:textSize="18sp" />
-
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:srcCompat="@drawable/ic_twitter_brands"
-            />
 
     </LinearLayout>
 

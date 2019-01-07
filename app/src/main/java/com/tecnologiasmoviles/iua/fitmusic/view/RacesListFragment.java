@@ -82,4 +82,3 @@ public class RacesListFragment extends Fragment {
     }
 
 }
-

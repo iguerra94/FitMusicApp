@@ -26,27 +26,45 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.airbnb.lottie.LottieAnimationView;
+import com.androidnetworking.AndroidNetworking;
+import com.androidnetworking.common.Priority;
+import com.androidnetworking.error.ANError;
+import com.androidnetworking.interfaces.JSONObjectRequestListener;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.tecnologiasmoviles.iua.fitmusic.BuildConfig;
 import com.tecnologiasmoviles.iua.fitmusic.R;
 import com.tecnologiasmoviles.iua.fitmusic.model.Carrera;
+import com.tecnologiasmoviles.iua.fitmusic.model.Punto;
 import com.tecnologiasmoviles.iua.fitmusic.model.Song;
 import com.tecnologiasmoviles.iua.fitmusic.model.exception.RaceModelException;
 import com.tecnologiasmoviles.iua.fitmusic.utils.DateUtils;
 import com.tecnologiasmoviles.iua.fitmusic.utils.MediaPlayerManager;
 import com.tecnologiasmoviles.iua.fitmusic.utils.RacesJSONParser;
+import com.tecnologiasmoviles.iua.fitmusic.utils.SharedPrefsKeys;
+import com.tecnologiasmoviles.iua.fitmusic.utils.SharedPrefsManager;
 import com.tecnologiasmoviles.iua.fitmusic.utils.SongUtils;
 import com.tecnologiasmoviles.iua.fitmusic.utils.TimeUtils;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -57,16 +75,9 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class NewRaceFragment extends Fragment implements View.OnClickListener, MediaPlayer.OnCompletionListener {
+public class NewRaceFragment extends Fragment implements View.OnClickListener, MediaPlayer.OnCompletionListener, SharedPreferences.OnSharedPreferenceChangeListener {
 
     private static final String LOG_TAG = NewRaceFragment.class.getSimpleName();
-
-    private static final String ID_SONG_KEY = "id_song";
-    private static final String REGISTRATION_TOKEN_KEY = "registration_token";
-    private static final String RACE_DISTANCE_KEY = "race_distance";
-    private static final String RACE_DURATION_KEY = "race_duration";
-    private static final String INITIAL_RACE_TIME_KEY = "initial_time";
-    private static final String CURRENT_RACE_TIME_KEY = "current_time";
 
     private static final int MY_PERMISSION_REQUEST = 1;
 
@@ -97,6 +108,9 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
     TextView txtFinishRace;
 
     TextView newRaceDistanceTextView;
+    TextView newRaceDistanceUnitTextView;
+    TextView newRaceRythmnTextView;
+    TextView newRaceRythmnUnitTextView;
     TextView newRaceDurationTextView;
 
     private long initialTime;
@@ -111,6 +125,10 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
     private boolean isRunning;
 
     private Carrera carrera;
+
+    private FusedLocationProviderClient fusedLocationProviderClient;
+    private LocationRequest locationRequest;
+    private LocationCallback locationCallback;
 
     private Handler mHandlerTimer = new Handler();
 
@@ -156,9 +174,14 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         txtFinishRace.setOnClickListener(this);
 
         newRaceDistanceTextView = view.findViewById(R.id.newRaceDistanceTextView);
+        newRaceDistanceUnitTextView = view.findViewById(R.id.newRaceDistanceUnitTextView);
+
+        newRaceRythmnTextView = view.findViewById(R.id.newRaceRythmnTextView);
+        newRaceRythmnUnitTextView = view.findViewById(R.id.newRaceRythmnUnitTextView);
+
         newRaceDurationTextView = view.findViewById(R.id.newRaceDurationTextView);
 
-        isRunning = readIsRunningVariableFromSharedPreferences("is_running");
+        isRunning = SharedPrefsManager.getInstance(getActivity()).readBoolean(SharedPrefsKeys.IS_RUNNING_KEY);
 
         songCoverImageViewNewRace = view.findViewById(R.id.songCoverImageViewNewRace);
         songCoverImageViewNewRace.setOnClickListener(this);
@@ -188,6 +211,10 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         raceDescriptionEditText = view.findViewById(R.id.raceDescriptionEditText);
         newRaceDescriptionTV = view.findViewById(R.id.newRaceDescriptionTextView);
         newRaceDateTV = view.findViewById(R.id.newRaceDateTextView);
+
+        SharedPrefsManager.getInstance(getActivity()).getSharedPrefs().registerOnSharedPreferenceChangeListener(this);
+
+        AndroidNetworking.initialize(getActivity());
 
         return view;
     }
@@ -241,9 +268,15 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
                     newRaceDescriptionTV.setText(raceDescription);
                     raceDescriptionEditText.setText("");
 
-                    saveIsRunningVariableToSharedPreferences("is_running", true);
+                    SharedPrefsManager.getInstance(getActivity()).saveBoolean(SharedPrefsKeys.IS_RUNNING_KEY, true);
+                    //TODO
                     saveDateAndDescriptionToSharedPrefs(dateFormatted, raceDescription);
                     saveRaceDateInitialTimeMsToSharedPrefs(carrera.getFechaCarrera().getTime());
+
+                    List<Punto> puntos = new ArrayList<>();
+
+                    saveListPointsToSharedPreferences(puntos);
+
                     setInitialTime(carrera.getFechaCarrera().getTime());
                 }
 
@@ -278,33 +311,25 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         }
     }
 
-    public void updateTimerUI() {
-        updateCurrentTimeTextView();
-    }
-
-    public void updateCurrentTimeTextView() {
-        mHandlerTimer.postDelayed(mUpdateTimerTask, 1000);
-    }
-
-    /**
-     * Background Runnable thread
-     * */
-    private Runnable mUpdateTimerTask = new Runnable() {
-        public void run() {
-            initialTime = getInitialTime();
-            long currentTime = new Date().getTime();
-            long currentDuration = currentTime - initialTime;
-
-            newRaceDurationTextView.setText(TimeUtils.milliSecondsToTimer(currentDuration));
-
-            Log.d(LOG_TAG, "Current Time: " + TimeUtils.milliSecondsToTimer(currentDuration));
-
-            // Running this thread after 1000 milliseconds
-            mHandlerTimer.postDelayed(this, 1000);
-        }
-    };
-
     private void finishRace() {
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//            if (Objects.requireNonNull(getActivity()).checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//                return;
+//            }
+//
+//            buildLocationRequest();
+//            buildLocationCallback();
+//
+//            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
+//            fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, null);
+//        } else {
+//            buildLocationRequest();
+//            buildLocationCallback();
+//
+//            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(Objects.requireNonNull(getActivity()));
+//            fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, null);
+//        }
+
         int x = layoutContent.getRight();
         int y = layoutContent.getBottom();
 
@@ -370,6 +395,32 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         }
     }
 
+    public void updateTimerUI() {
+        updateCurrentTimeTextView();
+    }
+
+    public void updateCurrentTimeTextView() {
+        mHandlerTimer.postDelayed(mUpdateTimerTask, 1000);
+    }
+
+    /**
+     * Background Runnable thread
+     * */
+    private Runnable mUpdateTimerTask = new Runnable() {
+        public void run() {
+            initialTime = getInitialTime();
+            long currentTime = new Date().getTime();
+            long currentDuration = currentTime - initialTime;
+
+            newRaceDurationTextView.setText(TimeUtils.milliSecondsToTimer(currentDuration));
+
+            Log.d(LOG_TAG, "Current Time: " + TimeUtils.milliSecondsToTimer(currentDuration));
+
+            // Running this thread after 1000 milliseconds
+            mHandlerTimer.postDelayed(this, 1000);
+        }
+    };
+
     private void saveDateAndDescriptionToSharedPrefs(String dateFormatted, String raceDescription) {
         SharedPreferences sharedPref = getActivity().getSharedPreferences(
                 BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
@@ -388,52 +439,6 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         return sharedPref.getString(
                 "race_date",
                 "");
-    }
-
-    private long readRaceDateInitialTimeMsFromSharedPreferences() {
-        AppCompatActivity containerActivity = (AppCompatActivity) getActivity();
-
-        assert containerActivity != null;
-
-        SharedPreferences sharedPref = containerActivity.getPreferences(Context.MODE_PRIVATE);
-
-        return sharedPref.getLong(
-                INITIAL_RACE_TIME_KEY,
-                0);
-    }
-
-    private void saveRaceDateInitialTimeMsToSharedPrefs(long time) {
-        AppCompatActivity containerActivity = (AppCompatActivity) getActivity();
-
-        assert containerActivity != null;
-
-        Log.d(LOG_TAG, "activity: " + containerActivity.getClass().getSimpleName());
-
-        SharedPreferences sharedPref = containerActivity.getPreferences(Context.MODE_PRIVATE);
-
-        SharedPreferences.Editor editor = sharedPref.edit();
-
-        editor.putLong(INITIAL_RACE_TIME_KEY, time);
-        editor.apply();
-    }
-
-    private long readRaceDateCurrentTimeMsFromSharedPreferences() {
-        SharedPreferences sharedPref = Objects.requireNonNull(getActivity()).getSharedPreferences(
-                BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
-
-        return sharedPref.getLong(
-                CURRENT_RACE_TIME_KEY,
-                0);
-    }
-
-    private void saveRaceDateCurrentTimeMsToSharedPrefs(long time) {
-        SharedPreferences sharedPref = Objects.requireNonNull(getActivity()).getSharedPreferences(
-                BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
-
-        SharedPreferences.Editor editor = sharedPref.edit();
-
-        editor.putLong(CURRENT_RACE_TIME_KEY, time);
-        editor.apply();
     }
 
     private String readRaceDescriptionFromSharedPreferences() {
@@ -462,15 +467,6 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         togglePlayBtn(false);
     }
 
-    private String readRegistrationTokenFromSharedPreferences() {
-        SharedPreferences sharedPref = Objects.requireNonNull(getActivity()).getSharedPreferences(
-                BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
-
-        return sharedPref.getString(
-                REGISTRATION_TOKEN_KEY,
-                "");
-    }
-
     private void saveRaceDateMsInFirebaseDatabase(String registrationToken) {
         // get users ref in firebase database
         DatabaseReference usersDBRef = FirebaseDatabase.getInstance().getReference().child("users");
@@ -490,45 +486,6 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
                 getResources().getInteger(R.integer.id_song_default_value));
     }
 
-    private void saveIdSongToSharedPreferences(String key, int value) {
-        SharedPreferences sharedPref = Objects.requireNonNull(getActivity()).getSharedPreferences(
-                BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
-
-        SharedPreferences.Editor editor = sharedPref.edit();
-
-        editor.putInt(key, value);
-        editor.apply();
-    }
-
-    private void saveIsRunningVariableToSharedPreferences(String key, boolean value) {
-        SharedPreferences sharedPref = Objects.requireNonNull(getActivity()).getSharedPreferences(
-                BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
-
-        SharedPreferences.Editor editor = sharedPref.edit();
-
-        editor.putBoolean(key, value);
-        editor.apply();
-    }
-
-    //    private void saveSongFinishedVariableToSharedPreferences(String key, boolean value) {
-//        SharedPreferences sharedPref = Objects.requireNonNull(getActivity()).getSharedPreferences(
-//                BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
-//
-//        SharedPreferences.Editor editor = sharedPref.edit();
-//
-//        editor.putBoolean(key, value);
-//        editor.apply();
-//    }
-
-    private boolean readIsRunningVariableFromSharedPreferences(String key) {
-        SharedPreferences sharedPref = Objects.requireNonNull(getActivity()).getSharedPreferences(
-                BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
-
-        return sharedPref.getBoolean(
-                key,
-                false);
-    }
-
     public void registerRace() {
         try {
             verificarCamposVacios();
@@ -546,7 +503,7 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
 
                     RacesJSONParser.saveRaceData(getActivity(), racesJSONFile, carrera);
                     vaciarCampos();
-                    Toast.makeText(getActivity(), "Se ha creado la carrera de manera exitosa!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Se ha creado la carrera de manera exitosa!", Toast.LENGTH_LONG).show();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -670,7 +627,10 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         super.onStart();
         Log.d(LOG_TAG, "ON START");
         setInitialTime(readRaceDateInitialTimeMsFromSharedPreferences());
+        sharedPref.registerOnSharedPreferenceChangeListener(this);
         Log.d(LOG_TAG, "initialTime: " + getInitialTime());
+        long distance = readDistanceFromSharedPreferences();
+        newRaceDistanceTextView.setText(String.valueOf(distance));
     }
 
     @Override
@@ -718,6 +678,7 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
     public void onPause() {
         super.onPause();
         Log.d(LOG_TAG, "ON PAUSE");
+        sharedPref.unregisterOnSharedPreferenceChangeListener(this);
     }
 
     private void stepBackward() {
@@ -807,15 +768,15 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         builder.setView(inflater.inflate(R.layout.dialog_register_race_question, null))
                 // Add action buttons
                 .setPositiveButton("Si", (dialog, id) -> {
-                    saveRaceDistanceAndDurationToSharedPrefs(newRaceDistanceTextView.getText().toString(), newRaceDurationTextView.getText().toString());
+                    saveRaceDurationToSharedPrefs(newRaceDurationTextView.getText().toString());
+                    saveDistanceUnitToSharedPreferences(newRaceDistanceUnitTextView.getText().toString());
 
                     String registrationToken = readRegistrationTokenFromSharedPreferences();
                     saveRaceDateMsInFirebaseDatabase(registrationToken);
                     finishRace();
 
                     dialog.dismiss();
-//                    AlertDialog dialogRaceRegistered = (AlertDialog) createDialogRaceRegistered();
-//                    dialogRaceRegistered.show();
+
                     Intent raceRegisteredIntent = new Intent(getActivity(), RaceRegisteredActivity.class);
                     startActivity(raceRegisteredIntent);
                 })
@@ -823,16 +784,64 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         return builder.create();
     }
 
-    private void saveRaceDistanceAndDurationToSharedPrefs(String distance, String duration) {
-        SharedPreferences sharedPref = Objects.requireNonNull(getActivity()).getSharedPreferences(
-                BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
+    private void buildLocationRequest() {
+        locationRequest = new LocationRequest();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setInterval(10);
+        locationRequest.setNumUpdates(1);
+        locationRequest.setExpirationTime(2000);
+        locationRequest.setFastestInterval(10);
+    }
 
-        SharedPreferences.Editor editor = sharedPref.edit();
+    private void buildLocationCallback() {
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                Punto p = new Punto(UUID.randomUUID(), locationResult.getLastLocation().getLatitude(), locationResult.getLastLocation().getLongitude());
+                List<Punto> puntos = readListPointsFromSharedPreferences();
+                puntos.add(p);
+                saveListPointsToSharedPreferences(puntos);
 
-        editor.putString(RACE_DISTANCE_KEY, distance);
-        editor.putString(RACE_DURATION_KEY, duration);
+                Toast.makeText(getActivity(), "Punto " + puntos.size() + ": " + p.toString(), Toast.LENGTH_LONG).show();
 
-        editor.apply();
+                if (puntos.size() > 1) {
+                    String origin = puntos.get(puntos.size()-1).getLat() + "," + puntos.get(puntos.size()-1).getLon();
+                    String destination = puntos.get(puntos.size()-2).getLat() + "," + puntos.get(puntos.size()-2).getLon();
+
+                    AndroidNetworking.get("https://maps.googleapis.com/maps/api/directions/json?origin={origin}&destination={destination}&mode={mode}&key={key}")
+                            .addPathParameter("origin", origin)
+                            .addPathParameter("destination", destination)
+                            .addPathParameter("mode", "walking")
+                            .addPathParameter("key", "AIzaSyA15bpgte2SVrhimPmJJKF65rDo01lPP0E")
+                            .setTag("test")
+                            .setPriority(Priority.HIGH)
+                            .build()
+                            .getAsJSONObject(new JSONObjectRequestListener() {
+                                @Override
+                                public void onResponse(JSONObject response) {
+                                    try {
+                                        JSONObject routes = response.getJSONArray("routes").getJSONObject(0);
+                                        JSONObject legs = (JSONObject) routes.getJSONArray("legs").get(0);
+                                        JSONObject distance = legs.getJSONObject("distance");
+                                        long distanceAccumulated = readDistanceFromSharedPreferences();
+                                        long newDistance = distanceAccumulated + distance.getLong("value");
+
+                                        Toast.makeText(getActivity(), "Total distance: " + newDistance, Toast.LENGTH_LONG).show();
+
+                                        saveDistanceToSharedPreferences(newDistance);
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+
+                                @Override
+                                public void onError(ANError anError) {
+                                    Log.d(LOG_TAG, "ERROR: " + anError.getErrorBody());
+                                }
+                            });
+                }
+            }
+        };
     }
 
     @Override
@@ -852,4 +861,16 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         }
     }
 
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        long distance = readDistanceFromSharedPreferences();
+        float rythmn = readRythmnFromSharedPreferences();
+        if (key.equals(RACE_CURRENT_DISTANCE_KEY)) {
+            newRaceDistanceTextView.setText(String.valueOf(distance));
+        }
+        if (key.equals(RACE_CURRENT_RYTHMN_KEY)) {
+//            newRaceRythmnTextView.setText(String.format("%.2f", rythmn));
+            newRaceRythmnTextView.setText(rythmn+"");
+        }
+    }
 }
