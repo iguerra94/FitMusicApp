@@ -92,4 +92,4 @@
             android:screenOrientation="portrait" />
     </application>
 
-</manifest> <!-- tools:replace="android:appComponentFactory" --><!-- android:appComponentFactory="whateverString" -->
+</manifest>

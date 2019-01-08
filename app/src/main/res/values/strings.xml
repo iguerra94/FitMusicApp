@@ -53,4 +53,5 @@
     <string name="com.twitter.sdk.android.CONSUMER_KEY">DO5st6qpINbjHb6MYCE4BWxN5</string>
     <string name="com.twitter.sdk.android.CONSUMER_SECRET">4uJL2ZKf2BnMOqYxRq5xIFTfoMbeODkCwHofdUXnnSAUjdYJKo</string>
     <string name="directions_api_key">AIzaSyA15bpgte2SVrhimPmJJKF65rDo01lPP0E</string>
+    <string name="initialRaceDurationString">00\'00\'\'</string>
 </resources>
