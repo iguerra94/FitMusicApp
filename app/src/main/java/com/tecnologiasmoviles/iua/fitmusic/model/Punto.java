@@ -16,6 +16,11 @@ public class Punto implements Serializable {
         this.lon = lon;
     }
 
+    public Punto(double lat, double lon) {
+        this.lat = lat;
+        this.lon = lon;
+    }
+
     public UUID getIdPunto() {
         return id_punto;
     }

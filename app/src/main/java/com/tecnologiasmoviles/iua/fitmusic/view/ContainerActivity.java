@@ -1,6 +1,7 @@
 package com.tecnologiasmoviles.iua.fitmusic.view;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -11,7 +12,6 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 import com.androidnetworking.AndroidNetworking;
 import com.androidnetworking.common.Priority;
@@ -23,6 +23,8 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.tecnologiasmoviles.iua.fitmusic.R;
 import com.tecnologiasmoviles.iua.fitmusic.model.Punto;
 import com.tecnologiasmoviles.iua.fitmusic.utils.SharedPrefsKeys;
@@ -32,6 +34,7 @@ import com.tecnologiasmoviles.iua.fitmusic.utils.TimeUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -54,6 +57,8 @@ public class ContainerActivity extends AppCompatActivity implements BottomNaviga
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationRequest locationRequest;
     private LocationCallback locationCallback;
+
+    DatabaseReference racesRef = FirebaseDatabase.getInstance().getReference().child("races");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -158,7 +163,7 @@ public class ContainerActivity extends AppCompatActivity implements BottomNaviga
         locationRequest.setFastestInterval(20000);
     }
 
-    private void buildLocationCallback() {
+    private void buildLocationCallback(String key) {
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
@@ -167,7 +172,25 @@ public class ContainerActivity extends AppCompatActivity implements BottomNaviga
                 puntos.add(p);
                 SharedPrefsManager.getInstance(ContainerActivity.this).saveListPoints(SharedPrefsKeys.RACE_LOCATION_POINTS_KEY, puntos);
 
-                Toast.makeText(ContainerActivity.this, "Punto " + puntos.size() + ": " + p.toString(), Toast.LENGTH_SHORT).show();
+                String pointKey = racesRef.child(key).push().getKey();
+                assert pointKey != null;
+
+                racesRef.child(key).child(pointKey).child("lat").setValue(p.getLat());
+                racesRef.child(key).child(pointKey).child("lon").setValue(p.getLon());
+
+                if (puntos.size() == 1) {
+                    racesRef.child(key).child(pointKey).child("distanceAccumulated").setValue(0f + " KM");
+                    racesRef.child(key).child(pointKey).child("rythmn").setValue(TimeUtils.milliSecondsToTimer(0) + "/KM");
+
+                    long initialRaceTime = SharedPrefsManager.getInstance(ContainerActivity.this).readLong(SharedPrefsKeys.INITIAL_RACE_TIME_KEY);
+
+                    long currentTime = new Date().getTime();
+                    long currentDuration = currentTime - initialRaceTime;
+
+                    SharedPrefsManager.getInstance(ContainerActivity.this).saveLong(SharedPrefsKeys.RACE_CURRENT_TIME_KEY, currentTime);
+                    racesRef.child(key).child(pointKey).child("time").setValue(currentTime);
+                    racesRef.child(key).child(pointKey).child("duration").setValue(TimeUtils.milliSecondsToTimer(currentDuration));
+                }
 
                 if (puntos.size() > 1) {
                     String origin = puntos.get(puntos.size()-1).getLat() + "," + puntos.get(puntos.size()-1).getLon();
@@ -190,27 +213,53 @@ public class ContainerActivity extends AppCompatActivity implements BottomNaviga
                                         JSONObject distance = legs.getJSONObject("distance");
 
                                         long distanceAccumulated = SharedPrefsManager.getInstance(ContainerActivity.this).readLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY);
-                                        long newDistance = distanceAccumulated + distance.getLong("value");
+                                        long currentDistance = distance.getLong("value");
+                                        long newDistance = distanceAccumulated + currentDistance;
 
-                                        float rythmn = SharedPrefsManager.getInstance(ContainerActivity.this).readFloat(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY);
+                                        racesRef.child(key).child(pointKey).child("distance").setValue(String.format("%.2f", currentDistance/1000f) + " KM");
+                                        racesRef.child(key).child(pointKey).child("distanceAccumulated").setValue(String.format("%.2f", distanceAccumulated/1000f) + " KM");
 
-                                        long initialTime = SharedPrefsManager.getInstance(ContainerActivity.this).readLong(SharedPrefsKeys.INITIAL_RACE_TIME_KEY);
+                                        SharedPrefsManager.getInstance(ContainerActivity.this).saveLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY, newDistance);
+
+                                        long initialRaceTime = SharedPrefsManager.getInstance(ContainerActivity.this).readLong(SharedPrefsKeys.INITIAL_RACE_TIME_KEY);
+
                                         long currentTime = new Date().getTime();
-                                        long currentDuration = currentTime - initialTime;
+                                        long currentDuration = currentTime - initialRaceTime;
 
-                                        float minutes = (currentDuration % (1000*60*60)) / (1000*60);
+                                        racesRef.child(key).child(pointKey).child("duration").setValue(TimeUtils.milliSecondsToTimer(currentDuration));
 
-                                        float newRythmn;
-                                        if (puntos.size() == 2) {
-                                            newRythmn = minutes/newDistance;
+                                        if (newDistance >= 1000) { // Distance is greater than or equal to 1 km.
+                                            long lastCurrentRaceTime = SharedPrefsManager.getInstance(ContainerActivity.this).readLong(SharedPrefsKeys.RACE_CURRENT_TIME_KEY);
+                                            long currentRaceTime = new Date().getTime();
+                                            long deltaTime = currentRaceTime - lastCurrentRaceTime;
+
+                                            SharedPrefsManager.getInstance(ContainerActivity.this).saveLong(SharedPrefsKeys.RACE_CURRENT_TIME_KEY, currentRaceTime);
+
+                                            racesRef.child(key).child(pointKey).child("time").setValue(currentRaceTime);
+                                            racesRef.child(key).child(pointKey).child("deltaTime").setValue(TimeUtils.milliSecondsToTimer(deltaTime));
+
+                                            long rythmn = SharedPrefsManager.getInstance(ContainerActivity.this).readLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY);
+                                            long newRythmn = 0;
+
+                                            if (rythmn == 0) {// First time to meausure rythhmn
+                                                newRythmn = (int) (deltaTime/(currentDistance/1000f));
+                                            }
+                                            if (newDistance >= distanceAccumulated + 500) {
+                                                newRythmn = (int) ((rythmn + (deltaTime/(currentDistance/1000f))) / 2);
+                                            }
+                                            racesRef.child(key).child(pointKey).child("rythmn").setValue(TimeUtils.milliSecondsToTimer(newRythmn) + "/KM");
+                                            SharedPrefsManager.getInstance(ContainerActivity.this).saveLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY, newRythmn);
                                         } else {
-                                            newRythmn = (rythmn + (minutes/newDistance)) / 2;
+                                            racesRef.child(key).child(pointKey).child("rythmn").setValue(TimeUtils.milliSecondsToTimer(0) + "/KM");
                                         }
 
-                                        Toast.makeText(ContainerActivity.this, "Distance: " + newDistance + ", Ritmo anterior: " + rythmn + ", Ritmo actual: " + newRythmn + ", Tiempo actual: " + TimeUtils.milliSecondsToTimer(currentDuration), Toast.LENGTH_LONG).show();
+                                        Date now = new Date();
 
-                                        SharedPrefsManager.getInstance(ContainerActivity.this).saveFloat(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY, newRythmn);
-                                        SharedPrefsManager.getInstance(ContainerActivity.this).saveLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY, newDistance);
+                                        @SuppressLint("SimpleDateFormat") SimpleDateFormat formatter = new SimpleDateFormat("HH:mm");
+
+                                        String dateFormatted = formatter.format(now) + " hs";
+                                        SharedPrefsManager.getInstance(ContainerActivity.this).saveString(SharedPrefsKeys.LAST_UPDATE_TIME_KEY, dateFormatted);
+                                        SharedPrefsManager.getInstance(ContainerActivity.this).saveLong(SharedPrefsKeys.LAST_UPDATE_TIME_MS_KEY, now.getTime());
                                     } catch (JSONException e) {
                                         e.printStackTrace();
                                     }
@@ -238,6 +287,8 @@ public class ContainerActivity extends AppCompatActivity implements BottomNaviga
             boolean isRunning = SharedPrefsManager.getInstance(this).readBoolean(SharedPrefsKeys.IS_RUNNING_KEY);
             Log.d(LOG_TAG, "isRunning: " + isRunning);
             if (isRunning) {
+                // Push new race in firebase and get the key of the race
+                String refKey = racesRef.push().getKey();
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                         return;
@@ -246,7 +297,7 @@ public class ContainerActivity extends AppCompatActivity implements BottomNaviga
                     SharedPrefsManager.getInstance(this).saveLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY, 0);
 
                     buildLocationRequest();
-                    buildLocationCallback();
+                    buildLocationCallback(refKey);
 
                     fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
                     fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
@@ -254,7 +305,7 @@ public class ContainerActivity extends AppCompatActivity implements BottomNaviga
                     SharedPrefsManager.getInstance(this).saveLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY, 0);
 
                     buildLocationRequest();
-                    buildLocationCallback();
+                    buildLocationCallback(refKey);
 
                     fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
                     fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
@@ -263,65 +314,6 @@ public class ContainerActivity extends AppCompatActivity implements BottomNaviga
                 if (fusedLocationProviderClient != null) {
                     fusedLocationProviderClient.removeLocationUpdates(locationCallback);
                     fusedLocationProviderClient = null;
-
-//                    locationRequest = new LocationRequest();
-//                    locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-//                    locationRequest.setInterval(100);
-//                    locationRequest.setFastestInterval(100);
-//
-//                    locationCallback = new LocationCallback() {
-//                        @Override
-//                        public void onLocationResult(LocationResult locationResult) {
-//                            Punto p = new Punto(UUID.randomUUID(), locationResult.getLastLocation().getLatitude(), locationResult.getLastLocation().getLongitude());
-//                            List<Punto> puntos = readListPointsFromSharedPreferences();
-//                            puntos.add(p);
-//                            saveListPointsToSharedPreferences(puntos);
-//
-//                            Toast.makeText(ContainerActivity.this, "Punto " + puntos.size() + ": " + p.toString(), Toast.LENGTH_SHORT).show();
-//
-//                            if (puntos.size() > 1) {
-//                                String origin = puntos.get(puntos.size()-1).getLat() + "," + puntos.get(puntos.size()-1).getLon();
-//                                String destination = puntos.get(puntos.size()-2).getLat() + "," + puntos.get(puntos.size()-2).getLon();
-//
-//                                AndroidNetworking.get("https://maps.googleapis.com/maps/api/directions/json?origin={origin}&destination={destination}&mode={mode}&key={key}")
-//                                        .addPathParameter("origin", origin)
-//                                        .addPathParameter("destination", destination)
-//                                        .addPathParameter("mode", "walking")
-//                                        .addPathParameter("key", "AIzaSyA15bpgte2SVrhimPmJJKF65rDo01lPP0E")
-//                                        .setTag("test")
-//                                        .setPriority(Priority.MEDIUM)
-//                                        .build()
-//                                        .getAsJSONObject(new JSONObjectRequestListener() {
-//                                            @Override
-//                                            public void onResponse(JSONObject response) {
-//                                                try {
-//                                                    JSONObject routes = response.getJSONArray("routes").getJSONObject(0);
-//                                                    JSONObject legs = (JSONObject) routes.getJSONArray("legs").get(0);
-//                                                    JSONObject distance = legs.getJSONObject("distance");
-//                                                    long distanceAccumulated = readDistanceFromSharedPreferences();
-//                                                    long newDistance = distanceAccumulated + distance.getLong("value");
-//
-//                                                    Toast.makeText(ContainerActivity.this, "Total distance: " + newDistance, Toast.LENGTH_SHORT).show();
-//
-//                                                    saveDistanceToSharedPreferences(newDistance);
-//
-//                                                    fusedLocationProviderClient.removeLocationUpdates(locationCallback);
-//                                                } catch (JSONException e) {
-//                                                    e.printStackTrace();
-//                                                }
-//                                            }
-//
-//                                            @Override
-//                                            public void onError(ANError anError) {
-//                                                Log.d(LOG_TAG, "ERROR: " + anError.getErrorBody());
-//                                            }
-//                                        });
-//                            }
-//                        }
-//                    };
-//
-//                    fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-//                    fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
                 }
             }
         }

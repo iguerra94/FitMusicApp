@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -61,6 +62,7 @@ public class SplashActivity extends AppCompatActivity {
             e1.printStackTrace();
         }
 
+        SharedPrefsManager.getInstance(this).saveLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY, 0);
 //        removeRegistrationTokenFromSharedPreferences();
 //        Get token
 
@@ -203,14 +205,12 @@ public class SplashActivity extends AppCompatActivity {
         // get users ref in firebase database
         DatabaseReference usersDBRef = FirebaseDatabase.getInstance().getReference().child("users");
         // save registration token in firebase database with child last_race_timestamp set to value 0 (zero).
-        usersDBRef.child(actualRegistationToken+"/last_race_date_miliseconds").addListenerForSingleValueEvent(new ValueEventListener() {
+        usersDBRef.child(actualRegistationToken).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    long last_race_date_miliseconds = dataSnapshot.getValue(Long.class);
-                    usersDBRef.child(updatedRegistationToken+"/last_race_date_miliseconds").setValue(last_race_date_miliseconds);
-                    usersDBRef.child(actualRegistationToken).setValue(null);
-                }
+                long last_race_date_miliseconds = dataSnapshot.child("last_race_date_miliseconds").getValue(Long.class);
+                usersDBRef.child(updatedRegistationToken+"/last_race_date_miliseconds").setValue(last_race_date_miliseconds);
+                usersDBRef.child(actualRegistationToken).setValue(null);
             }
 
             @Override

@@ -32,7 +32,7 @@ public class RaceRegisteredActivity extends AppCompatActivity implements View.On
 
     ImageButton btnTweetShare;
 
-    String raceDistance;
+    long raceDistance;
     String raceDuration;
 
     @Override
@@ -49,13 +49,15 @@ public class RaceRegisteredActivity extends AppCompatActivity implements View.On
 
         Twitter.initialize(this);
 
-        raceDistance = SharedPrefsManager.getInstance(this).readLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY) + SharedPrefsManager.getInstance(this).readString(SharedPrefsKeys.RACE_CURRENT_DISTANCE_UNIT_KEY);
+        raceDistance = SharedPrefsManager.getInstance(this).readLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY);
         raceDuration = SharedPrefsManager.getInstance(this).readString(SharedPrefsKeys.RACE_DURATION_KEY);
 
         raceDistanceTextViewRaceDetail = findViewById(R.id.raceDistanceTextViewRaceDetail);
         raceDurationTextViewRaceDetail = findViewById(R.id.raceDurationTextViewRaceDetail);
 
-        raceDistanceTextViewRaceDetail.setText(raceDistance);
+        float distanceToKms = (raceDistance/1000f);
+        raceDistanceTextViewRaceDetail.setText(String.format("%.2f", distanceToKms));
+
         raceDurationTextViewRaceDetail.setText(raceDuration);
 
         btnTweetShare = findViewById(R.id.tw_post_tweet);
@@ -65,7 +67,6 @@ public class RaceRegisteredActivity extends AppCompatActivity implements View.On
     @Override
     public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-//        callbackManager.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == TWEET_COMPOSER_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
@@ -87,9 +88,13 @@ public class RaceRegisteredActivity extends AppCompatActivity implements View.On
     public void onClick(View v) {
         String durationNormalized = TimeUtils.normalizeDuration(raceDuration);
 
+        float raceDistanceToKms = (raceDistance/1000f);
+        String raceDistanceWithFixedDecimals = String.format("%.2f", raceDistanceToKms);
+
         StringBuilder shareUrl = new StringBuilder()
-                .append("https://fitmusic-af1fe.firebaseapp.com/shareRace?distance=")
-                .append(raceDistance)
+                .append("https://fitmusic-af1fe.firebaseapp.com/shareRace")
+                .append("?distance=")
+                .append(raceDistanceWithFixedDecimals)
                 .append("&duration=")
                 .append(durationNormalized);
         if (v.getId() == R.id.tw_post_tweet) {
@@ -98,7 +103,7 @@ public class RaceRegisteredActivity extends AppCompatActivity implements View.On
 
                 Intent intent = new TweetComposer.Builder(this)
                         .text("I just finished an amazing running session. I managed to do " +
-                                raceDistance + ". in " + durationAsSentence + ". Via @FitMusicApp")
+                                raceDistanceWithFixedDecimals + " KM in " + durationAsSentence + ". Via @FitMusicApp")
                         .url(new URL(shareUrl.toString()))
                         .createIntent();
 
