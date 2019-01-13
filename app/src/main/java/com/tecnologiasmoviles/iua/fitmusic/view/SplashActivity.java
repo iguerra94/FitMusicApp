@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -56,13 +55,10 @@ public class SplashActivity extends AppCompatActivity {
         try {
             File file = new File(getFilesDir(), "races_data.json");
             createFileIfNotExists(file);
-            SharedPrefsManager.getInstance(this).saveInt(SharedPrefsKeys.ID_SONG_KEY, -1);
-            SharedPrefsManager.getInstance(this).saveBoolean(SharedPrefsKeys.IS_RUNNING_KEY, false);
         } catch (IOException e1) {
             e1.printStackTrace();
         }
 
-        SharedPrefsManager.getInstance(this).saveLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY, 0);
 //        removeRegistrationTokenFromSharedPreferences();
 //        Get token
 
@@ -250,7 +246,7 @@ public class SplashActivity extends AppCompatActivity {
                 if(grantResults[i] != PackageManager.PERMISSION_GRANTED){
                     if(shouldShowRequestPermissionRationale(permissions[i])){
                         new AlertDialog.Builder(this)
-                                .setMessage("Your error message here")
+                                .setMessage("The permissions are not granted!")
                                 .setPositiveButton("Allow", (dialog, which) -> requestMultiplePermissions())
                                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
                                 .create()
@@ -261,6 +257,9 @@ public class SplashActivity extends AppCompatActivity {
             }
             //all is good, continue flow
             createRegistrationToken();
+
+            // Reset all race SharedPrefsKeys
+            SharedPrefsManager.initRaceSharedPrefsKeys(this);
 
             boolean appIsOpened = SharedPrefsManager.getInstance(this).readBoolean(SharedPrefsKeys.APP_IS_OPENED_KEY);
 

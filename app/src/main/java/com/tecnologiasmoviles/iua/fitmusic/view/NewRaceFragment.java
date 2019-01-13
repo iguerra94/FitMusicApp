@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,6 +28,10 @@ import android.widget.Toast;
 
 import com.airbnb.lottie.LottieAnimationView;
 import com.androidnetworking.AndroidNetworking;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.database.DatabaseReference;
@@ -37,6 +42,8 @@ import com.tecnologiasmoviles.iua.fitmusic.model.Punto;
 import com.tecnologiasmoviles.iua.fitmusic.model.Song;
 import com.tecnologiasmoviles.iua.fitmusic.model.exception.RaceModelException;
 import com.tecnologiasmoviles.iua.fitmusic.utils.DateUtils;
+import com.tecnologiasmoviles.iua.fitmusic.utils.FirebaseRefs;
+import com.tecnologiasmoviles.iua.fitmusic.utils.LocationService;
 import com.tecnologiasmoviles.iua.fitmusic.utils.MediaPlayerManager;
 import com.tecnologiasmoviles.iua.fitmusic.utils.RacesJSONParser;
 import com.tecnologiasmoviles.iua.fitmusic.utils.SharedPrefsKeys;
@@ -230,6 +237,13 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
                     newRaceDateTV.setText("");
                     newRaceDescriptionTV.setText("");
                     SharedPrefsManager.getInstance(getActivity()).saveBoolean(SharedPrefsKeys.IS_RUNNING_KEY, true);
+
+                    Date now = new Date();
+
+                    @SuppressLint("SimpleDateFormat") SimpleDateFormat formatterTime = new SimpleDateFormat("HH:mm");
+                    String dateFormattedTime = formatterTime.format(now) + " hs";
+
+                    SharedPrefsManager.getInstance(getActivity()).saveString(SharedPrefsKeys.LAST_UPDATE_TIME_KEY, dateFormattedTime);
                 }
 
                 @Override
@@ -239,15 +253,9 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
                     carrera.setFechaCarrera(now);
 
                     @SuppressLint("SimpleDateFormat") SimpleDateFormat formatterDateTime = new SimpleDateFormat("dd/MM/yyyy - HH:mm");
-                    @SuppressLint("SimpleDateFormat") SimpleDateFormat formatterTime = new SimpleDateFormat("HH:mm");
 
                     String dateFormattedDateTime = formatterDateTime.format(now) + " hs";
                     String raceDescription = raceDescriptionEditText.getText().toString();
-
-                    String dateFormattedTime = formatterTime.format(now) + " hs";
-
-                    SharedPrefsManager.getInstance(getActivity()).saveString(SharedPrefsKeys.LAST_UPDATE_TIME_KEY, dateFormattedTime);
-                    SharedPrefsManager.getInstance(getActivity()).saveLong(SharedPrefsKeys.LAST_UPDATE_TIME_MS_KEY, now.getTime());
 
                     newRaceDateTV.setText(dateFormattedDateTime);
                     newRaceDescriptionTV.setText(raceDescription);
@@ -306,7 +314,6 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         Log.d(LOG_TAG, "x: " + x + ", y: " + y + ", startRadius: " + startRadius + ", endRadius: " + endRadius);
 
         songList = null;
-        SharedPrefsManager.getInstance(getActivity()).saveInt(SharedPrefsKeys.ID_SONG_KEY, -1);
 
         Animator anim;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
@@ -346,10 +353,8 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
             relativeLayoutNewRace.setVisibility(View.VISIBLE);
             flStartRace.setVisibility(View.VISIBLE);
 
-            SharedPrefsManager.getInstance(getActivity()).saveBoolean(SharedPrefsKeys.IS_RUNNING_KEY, false);
-            SharedPrefsManager.getInstance(getActivity()).saveString(SharedPrefsKeys.RACE_DATE_STRING_KEY, "");
-            SharedPrefsManager.getInstance(getActivity()).saveString(SharedPrefsKeys.RACE_DESCRIPTION_KEY, "");
-            SharedPrefsManager.getInstance(getActivity()).saveLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY, 0);
+            // Reset all race SharedPrefsKeys
+            SharedPrefsManager.initRaceSharedPrefsKeys(getActivity());
 
             mHandlerTimer.removeCallbacks(mUpdateTimerTask);
             newRaceDurationTextView.setText(getString(R.string.initialRaceDurationString));
@@ -697,7 +702,14 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
                     if (ContextCompat.checkSelfPermission(Objects.requireNonNull(getActivity()),
                             Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                         startRace();
-                        return;
+
+                        String refKey = FirebaseRefs.getRacesRef().push().getKey();
+
+                        LocationRequest locationRequest = LocationService.buildLocationRequest();
+                        LocationCallback locationCallback = LocationService.buildLocationCallback(getActivity(), refKey);
+
+                        FusedLocationProviderClient fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
+                        fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
                     }
                 } else {
                     Objects.requireNonNull(getActivity()).finish();

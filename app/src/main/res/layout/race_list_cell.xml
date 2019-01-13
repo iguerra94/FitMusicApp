@@ -20,7 +20,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/race_list_cell_distance_label"
-            android:textStyle="bold"
             android:textSize="12sp"
             android:gravity="center"
             />
@@ -69,7 +68,6 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textStyle="bold"
             android:textSize="12sp"
             android:text="@string/race_list_cell_duration_label"
             android:gravity="center"
@@ -111,7 +109,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/race_list_cell_date_label"
-            android:textStyle="bold"
             android:textSize="12sp"
             android:gravity="center"
             />

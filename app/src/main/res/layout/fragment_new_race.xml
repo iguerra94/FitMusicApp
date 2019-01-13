@@ -53,7 +53,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="#ddd"
-            android:visibility="gone">
+            android:visibility="gone"
+            >
 
             <LinearLayout
                 android:id="@+id/linearLayoutNewRace"
@@ -61,8 +62,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="?attr/actionBarSize"
                 android:orientation="vertical"
-                android:paddingTop="32dp"
-                android:paddingBottom="32dp">
+                android:paddingTop="24dp"
+                android:paddingBottom="24dp">
 
                 <TextView
                     android:id="@+id/newRaceDateTextView"
@@ -78,8 +79,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/activity_horizontal_margin"
                     android:paddingStart="@dimen/activity_horizontal_margin"
-                    android:textAlignment="center"
                     android:text="Trote al parque"
+                    android:textAlignment="center"
                     android:textSize="18sp" />
 
             </LinearLayout>
@@ -91,11 +92,21 @@
                 android:layout_gravity="center"
                 android:layout_marginBottom="32dp">
 
+                <TextView
+                    android:id="@+id/lblRaceDistance"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="distancia"
+                    android:textAlignment="center"
+                    android:textAllCaps="true"
+                    android:textSize="10sp" />
+
                 <LinearLayout
                     android:id="@+id/layoutDistance"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_below="@id/lblRaceDistance"
                     android:gravity="center"
                     android:orientation="horizontal">
 
@@ -126,16 +137,47 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/layoutDurationAndRythmn"
+                    android:id="@+id/linearLayoutDurationAndRythmn"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_below="@id/layoutDistance"
                     android:orientation="horizontal">
 
+                    <TextView
+                        android:id="@+id/lblRaceDuration"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_weight="1"
+                        android:text="duracion"
+                        android:textAlignment="center"
+                        android:textAllCaps="true"
+                        android:textSize="10sp" />
+
+                    <TextView
+                        android:id="@+id/lblRaceRythmn"
+                        android:layout_width="0dp"
+                        android:layout_marginTop="4dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:text="ritmo"
+                        android:textAllCaps="true"
+                        android:textAlignment="center"
+                        android:textSize="10sp"
+                        />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/layoutDurationAndRythmn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/linearLayoutDurationAndRythmn"
+                    android:orientation="horizontal">
+
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_marginTop="8dp"
                         android:layout_weight="1"
                         android:gravity="center"
                         android:orientation="horizontal">
@@ -160,7 +202,6 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_marginTop="8dp"
                         android:layout_weight="1"
                         android:gravity="start"
                         android:orientation="horizontal">
@@ -188,7 +229,6 @@
                             android:text="/KM"
                             android:textSize="24sp" />
 
-
                     </LinearLayout>
 
                 </LinearLayout>
@@ -205,7 +245,7 @@
                         android:id="@+id/lastUpdateTextView"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text=""
+                        android:text="Ultima actualizacion: 16:40 hs"
                         android:textAlignment="center"
                         android:layout_weight="1"
                         android:textSize="12sp"
@@ -271,8 +311,7 @@
             android:text="Empezar carrera"
             android:textAllCaps="true"
             android:textColor="#000"
-            android:textSize="16sp"
-            />
+            android:textSize="16sp" />
 
     </FrameLayout>
 

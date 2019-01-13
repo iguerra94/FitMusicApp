@@ -10,7 +10,6 @@ public class SharedPrefsKeys {
     public static final String RACE_CURRENT_RYTHMN_KEY = "race_current_rythmn";
     public static final String INITIAL_RACE_TIME_KEY = "initial_time";
     public static final String LAST_UPDATE_TIME_KEY = "last_update_time";
-    public static final String LAST_UPDATE_TIME_MS_KEY = "last_update_time_ms";
     public static final String ID_SONG_KEY = "id_song";
     public static final String RACE_DATE_STRING_KEY = "race_date_string";
     public static final String RACE_DESCRIPTION_KEY = "race_description";

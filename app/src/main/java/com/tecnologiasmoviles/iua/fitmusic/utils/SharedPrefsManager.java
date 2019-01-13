@@ -69,15 +69,6 @@ public class SharedPrefsManager {
         return sharedPreferences.getLong(KEY, 0);
     }
 
-    public void saveFloat(String KEY, float VALUE) {
-        editor.putFloat(KEY, VALUE);
-        editor.apply();
-    }
-
-    public float readFloat(String KEY) {
-        return sharedPreferences.getFloat(KEY, 0f);
-    }
-
     public void saveListPoints(String KEY, List<Punto> pointsList) {
         Gson gson = new Gson();
         String json = gson.toJson(pointsList);
@@ -93,6 +84,20 @@ public class SharedPrefsManager {
         List<Punto> pointsList = gson.fromJson(response, new TypeToken<List<Punto>>() {}.getType());
 
         return pointsList;
+    }
+    
+    public static void initRaceSharedPrefsKeys(Context context) {
+        SharedPrefsManager.getInstance(context).saveBoolean(SharedPrefsKeys.IS_RUNNING_KEY, false);
+        SharedPrefsManager.getInstance(context).saveString(SharedPrefsKeys.LAST_UPDATE_TIME_KEY, "");
+        SharedPrefsManager.getInstance(context).saveString(SharedPrefsKeys.RACE_DATE_STRING_KEY, "");
+        SharedPrefsManager.getInstance(context).saveString(SharedPrefsKeys.RACE_DESCRIPTION_KEY, "");
+        SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.INITIAL_RACE_TIME_KEY, 0);
+        SharedPrefsManager.getInstance(context).saveListPoints(SharedPrefsKeys.RACE_LOCATION_POINTS_KEY, null);
+        SharedPrefsManager.getInstance(context).saveString(SharedPrefsKeys.RACE_DURATION_KEY, "");
+        SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY, 0);
+        SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.RACE_CURRENT_TIME_KEY, 0);
+        SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY, 0);
+        SharedPrefsManager.getInstance(context).saveInt(SharedPrefsKeys.ID_SONG_KEY, -1);
     }
 
 }
