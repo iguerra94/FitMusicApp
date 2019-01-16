@@ -59,27 +59,15 @@ public class SplashActivity extends AppCompatActivity {
             e1.printStackTrace();
         }
 
+        // Reset all race SharedPrefsKeys
+        SharedPrefsManager.initRaceSharedPrefsKeys(this);
+
 //        removeRegistrationTokenFromSharedPreferences();
 //        Get token
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if(!arePermissionsEnabled()){
                 requestMultiplePermissions();
-//                permissions granted, continue flow normally
-//                String registrationToken = readRegistrationTokenFromSharedPreferences();
-//                Log.d(LOG_TAG, "TOKEN LEIDO: " + registrationToken);
-//
-//                if (registrationToken.isEmpty()) {
-//                    createRegistrationToken();
-//                    subscribeClientToTopic();
-//                }
-//
-//                boolean appIsOpened = readAppIsOpenedFromSharedPreferences();
-//
-//                if (appIsOpened) {
-//                    Log.d(LOG_TAG, "appIsOpened: " + appIsOpened);
-//                    goToMainActivity(this.getCurrentFocus());
-//                }
             } else {
                 boolean appIsOpened = SharedPrefsManager.getInstance(this).readBoolean(SharedPrefsKeys.APP_IS_OPENED_KEY);
 
@@ -89,12 +77,6 @@ public class SplashActivity extends AppCompatActivity {
                 }
             }
         }
-
-//        boolean canRead = askReadPermission();
-//        Log.d(LOG_TAG, "canRead: " + canRead);
-//
-//        if (canRead) {
-//        }
     }
 
     public void goToMainActivity(View view) {
@@ -257,9 +239,6 @@ public class SplashActivity extends AppCompatActivity {
             }
             //all is good, continue flow
             createRegistrationToken();
-
-            // Reset all race SharedPrefsKeys
-            SharedPrefsManager.initRaceSharedPrefsKeys(this);
 
             boolean appIsOpened = SharedPrefsManager.getInstance(this).readBoolean(SharedPrefsKeys.APP_IS_OPENED_KEY);
 

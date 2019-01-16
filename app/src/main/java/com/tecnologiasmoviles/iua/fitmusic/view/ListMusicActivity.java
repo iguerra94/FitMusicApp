@@ -208,18 +208,19 @@ public class ListMusicActivity extends AppCompatActivity implements SharedPrefer
         public void run() {
             if (mediaPlayerManager.getMediaPlayer() != null) {
                 long currentDuration = mediaPlayerManager.getMediaPlayer().getCurrentPosition();
-                currentDurationGlobal = (currentDuration > 0) ? currentDuration: 0;
+
+                currentDurationGlobal = (currentDuration > 0 && currentDuration < totalDuration) ? currentDuration: 0;
                 // Displaying time completed playing
                 songProgressDurationTextViewListMusic.setText(TimeUtils.milliSecondsToTimer(currentDurationGlobal));
-
-                // Running this thread after 100 milliseconds
-                mHandler.postDelayed(this, 100);
 
                 Log.d(LOG_TAG, currentDurationGlobal + ", " + totalDuration);
                 if (currentDurationGlobal >= totalDuration) {
                     Log.d(LOG_TAG, "Song finished..");
                     stepForward();
                 }
+
+                // Running this thread after 100 milliseconds
+                mHandler.postDelayed(this, 100);
             }
         }
     };

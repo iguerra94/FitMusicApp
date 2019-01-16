@@ -13,10 +13,8 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 
 import com.androidnetworking.AndroidNetworking;
-import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.tecnologiasmoviles.iua.fitmusic.R;
 import com.tecnologiasmoviles.iua.fitmusic.utils.FirebaseRefs;
@@ -40,7 +38,6 @@ public class ContainerActivity extends AppCompatActivity implements BottomNaviga
     private RacesListFragment racesListFragment;
 
     private LocationCallback locationCallback;
-    private FusedLocationProviderClient fusedLocationProviderClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -128,6 +125,13 @@ public class ContainerActivity extends AppCompatActivity implements BottomNaviga
         super.onStart();
         Log.d(LOG_TAG, "Container onStart");
         SharedPrefsManager.getInstance(this).getSharedPrefs().registerOnSharedPreferenceChangeListener(this);
+
+        boolean isRunning = SharedPrefsManager.getInstance(this).readBoolean(SharedPrefsKeys.IS_RUNNING_KEY);
+
+        if (!isRunning) {
+            // Reset all race SharedPrefsKeys
+            SharedPrefsManager.initRaceSharedPrefsKeys(this);
+        }
     }
 
     @Override
@@ -150,6 +154,8 @@ public class ContainerActivity extends AppCompatActivity implements BottomNaviga
             if (isRunning) {
                 // Push new race in firebase and get the key of the race
                 String refKey = FirebaseRefs.getRacesRef().push().getKey();
+                SharedPrefsManager.getInstance(this).saveString(SharedPrefsKeys.RACE_CURRENT_FIREBASE_KEY, refKey);
+
                 LocationRequest locationRequest;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -157,24 +163,33 @@ public class ContainerActivity extends AppCompatActivity implements BottomNaviga
                     }
 
                     locationRequest = LocationService.buildLocationRequest();
-                    locationCallback = LocationService.buildLocationCallback(ContainerActivity.this, refKey);
+                    locationCallback = LocationService.buildLocationCallback(ContainerActivity.this, refKey, "");
 
-                    fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-                    fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
+                    LocationService.getFusedLocationProviderClientInstance(this).requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
                 } else {
                     locationRequest = LocationService.buildLocationRequest();
-                    locationCallback = LocationService.buildLocationCallback(ContainerActivity.this, refKey);
+                    locationCallback = LocationService.buildLocationCallback(ContainerActivity.this, refKey, "");
 
-                    fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-                    fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
-                }
-            } else {
-                if (fusedLocationProviderClient != null) {
-                    fusedLocationProviderClient.removeLocationUpdates(locationCallback);
-                    fusedLocationProviderClient = null;
+                    LocationService.getFusedLocationProviderClientInstance(this).requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
                 }
             }
         }
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        boolean isRunning = SharedPrefsManager.getInstance(this).readBoolean(SharedPrefsKeys.IS_RUNNING_KEY);
+        Log.d(LOG_TAG, "onStop isRunning: " + isRunning);
+
+        if (!isRunning) {
+            if (locationCallback != null) {
+                LocationService.getFusedLocationProviderClientInstance(this).removeLocationUpdates(locationCallback);
+                locationCallback = null;
+            }
+        }
+
+        Log.d(LOG_TAG, "onStop Container Activity");
+    }
 }

@@ -62,6 +62,9 @@ public class RaceRegisteredActivity extends AppCompatActivity implements View.On
 
         btnTweetShare = findViewById(R.id.tw_post_tweet);
         btnTweetShare.setOnClickListener(this);
+
+        // Reset all race SharedPrefsKeys
+        SharedPrefsManager.initRaceSharedPrefsKeys(this);
     }
 
     @Override

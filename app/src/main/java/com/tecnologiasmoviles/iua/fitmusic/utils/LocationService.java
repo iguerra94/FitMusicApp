@@ -8,9 +8,11 @@ import com.androidnetworking.AndroidNetworking;
 import com.androidnetworking.common.Priority;
 import com.androidnetworking.error.ANError;
 import com.androidnetworking.interfaces.JSONObjectRequestListener;
+import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
 import com.tecnologiasmoviles.iua.fitmusic.model.Punto;
 
 import org.json.JSONException;
@@ -25,6 +27,15 @@ public class LocationService {
 
     private static final String LOG_TAG = LocationService.class.getSimpleName();
 
+    private static FusedLocationProviderClient fusedLocationProviderClient;
+
+    public static FusedLocationProviderClient getFusedLocationProviderClientInstance(Context context) {
+        if (fusedLocationProviderClient == null) {
+            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context);
+        }
+        return fusedLocationProviderClient;
+    }
+
     public static LocationRequest buildLocationRequest() {
         LocationRequest locationRequest = new LocationRequest();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -33,7 +44,7 @@ public class LocationService {
         return locationRequest;
     }
 
-    public static LocationCallback buildLocationCallback(Context context, String key) {
+    public static LocationCallback buildLocationCallback(Context context, String key, String duration) {
         LocationCallback locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
@@ -87,7 +98,12 @@ public class LocationService {
                                         long newDistance = distanceAccumulated + currentDistance;
 
                                         FirebaseRefs.getRacesRef().child(key).child(pointKey).child("distance").setValue(String.format("%.2f", currentDistance / 1000f) + " KM");
-                                        FirebaseRefs.getRacesRef().child(key).child(pointKey).child("distanceAccumulated").setValue(String.format("%.2f", distanceAccumulated / 1000f) + " KM");
+
+                                        if (SharedPrefsManager.getInstance(context).readBoolean(SharedPrefsKeys.RACE_GETTING_LAST_POINT_KEY)) {
+                                            FirebaseRefs.getRacesRef().child(key).child(pointKey).child("distanceAccumulated").setValue(String.format("%.2f", newDistance / 1000f) + " KM");
+                                        } else {
+                                            FirebaseRefs.getRacesRef().child(key).child(pointKey).child("distanceAccumulated").setValue(String.format("%.2f", distanceAccumulated / 1000f) + " KM");
+                                        }
 
                                         SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY, newDistance);
 
@@ -96,29 +112,66 @@ public class LocationService {
                                         long currentTime = new Date().getTime();
                                         long currentDuration = currentTime - initialRaceTime;
 
-                                        FirebaseRefs.getRacesRef().child(key).child(pointKey).child("duration").setValue(TimeUtils.milliSecondsToTimer(currentDuration));
+                                        if (SharedPrefsManager.getInstance(context).readBoolean(SharedPrefsKeys.RACE_GETTING_LAST_POINT_KEY)) {
+                                            if (!duration.isEmpty()) {
+                                                FirebaseRefs.getRacesRef().child(key).child(pointKey).child("duration").setValue(duration);
+                                            }
+                                        } else {
+                                            FirebaseRefs.getRacesRef().child(key).child(pointKey).child("duration").setValue(TimeUtils.milliSecondsToTimer(currentDuration));
+                                        }
 
                                         if (newDistance >= 1000) { // Distance is greater than or equal to 1 km.
-                                            long lastCurrentRaceTime = SharedPrefsManager.getInstance(context).readLong(SharedPrefsKeys.RACE_CURRENT_TIME_KEY);
                                             long currentRaceTime = new Date().getTime();
-                                            long deltaTime = currentRaceTime - lastCurrentRaceTime;
 
                                             SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.RACE_CURRENT_TIME_KEY, currentRaceTime);
 
                                             FirebaseRefs.getRacesRef().child(key).child(pointKey).child("time").setValue(currentRaceTime);
-                                            FirebaseRefs.getRacesRef().child(key).child(pointKey).child("deltaTime").setValue(TimeUtils.milliSecondsToTimer(deltaTime));
 
                                             long rythmn = SharedPrefsManager.getInstance(context).readLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY);
-                                            long newRythmn = 0;
 
                                             if (rythmn == 0) {// First time to meausure rythhmn
-                                                newRythmn = (int) (deltaTime / (currentDistance / 1000f));
+                                                long deltaTime = currentRaceTime - initialRaceTime;
+                                                float distanceInKms = (newDistance / 1000f);
+
+                                                FirebaseRefs.getRacesRef().child(key).child(pointKey).child("deltaTime").setValue(TimeUtils.milliSecondsToTimer(deltaTime));
+
+                                                long newRythmn = (int) (deltaTime / distanceInKms);
+
+                                                SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY, newRythmn);
+                                                SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_TIME_KEY, currentRaceTime);
+                                                SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_DISTANCE_KEY, newDistance);
+
+                                                FirebaseRefs.getRacesRef().child(key).child(pointKey).child("rythmn").setValue(TimeUtils.milliSecondsToTimer(newRythmn) + "/KM");
                                             }
-                                            if (newDistance >= distanceAccumulated + 500) {
-                                                newRythmn = (int) ((rythmn + (deltaTime / (currentDistance / 1000f))) / 2);
+
+                                            long lastUpdatedRythmnDistance = SharedPrefsManager.getInstance(context).readLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_DISTANCE_KEY);
+
+                                            if (newDistance >= lastUpdatedRythmnDistance + 500) {
+                                                SharedPrefsManager.getInstance(context).saveBoolean(SharedPrefsKeys.RACE_SHOULD_MEASURE_RYTHMN_KEY, true);
+                                                SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_DISTANCE_KEY, newDistance);
                                             }
-                                            FirebaseRefs.getRacesRef().child(key).child(pointKey).child("rythmn").setValue(TimeUtils.milliSecondsToTimer(newRythmn) + "/KM");
-                                            SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY, newRythmn);
+
+                                            boolean shouldMeasureRythmn = SharedPrefsManager.getInstance(context).readBoolean(SharedPrefsKeys.RACE_SHOULD_MEASURE_RYTHMN_KEY);
+
+                                            if (shouldMeasureRythmn) {
+                                                long lastUpdatedRythmnTime = SharedPrefsManager.getInstance(context).readLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_TIME_KEY);
+                                                long deltaTime = currentRaceTime - lastUpdatedRythmnTime;
+
+                                                lastUpdatedRythmnDistance = SharedPrefsManager.getInstance(context).readLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_DISTANCE_KEY);
+                                                float distanceInKms = (lastUpdatedRythmnDistance / 1000f);
+
+                                                FirebaseRefs.getRacesRef().child(key).child(pointKey).child("deltaTime").setValue(TimeUtils.milliSecondsToTimer(deltaTime));
+
+                                                long newRythmn = (int) ((rythmn + (deltaTime / distanceInKms)) / 2);
+
+                                                SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY, newRythmn);
+                                                SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_TIME_KEY, currentRaceTime);
+
+                                                FirebaseRefs.getRacesRef().child(key).child(pointKey).child("rythmn").setValue(TimeUtils.milliSecondsToTimer(newRythmn) + "/KM");
+
+                                                SharedPrefsManager.getInstance(context).saveBoolean(SharedPrefsKeys.RACE_SHOULD_MEASURE_RYTHMN_KEY, false);
+                                            }
+
                                         } else {
                                             FirebaseRefs.getRacesRef().child(key).child(pointKey).child("rythmn").setValue(TimeUtils.milliSecondsToTimer(0) + "/KM");
                                         }
@@ -129,6 +182,9 @@ public class LocationService {
 
                                         String dateFormatted = formatter.format(now) + " hs";
                                         SharedPrefsManager.getInstance(context).saveString(SharedPrefsKeys.LAST_UPDATE_TIME_KEY, dateFormatted);
+                                        SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.LAST_UPDATE_TIME_MS_KEY, now.getTime());
+
+                                        SharedPrefsManager.getInstance(context).saveBoolean(SharedPrefsKeys.RACE_GETTING_LAST_POINT_KEY, false);
                                     } catch (JSONException e) {
                                         e.printStackTrace();
                                     }
