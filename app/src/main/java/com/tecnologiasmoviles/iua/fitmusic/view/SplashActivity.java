@@ -54,6 +54,7 @@ public class SplashActivity extends AppCompatActivity {
 
         try {
             File file = new File(getFilesDir(), "races_data.json");
+//            file.delete();
             createFileIfNotExists(file);
         } catch (IOException e1) {
             e1.printStackTrace();

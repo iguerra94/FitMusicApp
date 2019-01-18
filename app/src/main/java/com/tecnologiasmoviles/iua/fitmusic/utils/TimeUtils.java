@@ -109,6 +109,21 @@ public class TimeUtils {
         return durationNormalized;
     }
 
+    public static long parseDurationFromStringToMs(String raceDuration) {
+        long hours = 0, minutes, seconds;
+
+        if (raceDuration.contains("h")) {
+            hours = Long.parseLong(raceDuration.substring(0,2)) * 3600000;
+            minutes = Long.parseLong(raceDuration.substring(3,5)) * 60000;
+            seconds = Long.parseLong(raceDuration.substring(6,8)) * 1000;
+        } else {
+            minutes = Long.parseLong(raceDuration.substring(0,2)) * 60000;
+            seconds = Long.parseLong(raceDuration.substring(3,5)) * 1000;
+        }
+
+        return hours + minutes + seconds;
+    }
+
     public static String parseDurationAsSentence(String raceDuration) {
         List<String> durationSplitted = new ArrayList<>();
 

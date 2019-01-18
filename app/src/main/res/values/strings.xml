@@ -17,7 +17,7 @@
     <string name="toolbar_title_detail_race">Detalle carrera</string>
     <string name="race_list_cell_date_label">Fecha</string>
     <string name="race_list_cell_duration_label">Duracion</string>
-    <string name="race_list_cell_distance_unit_label">KM</string>
+    <string name="race_list_cell_distance_unit_label">km</string>
     <string name="race_list_cell_distance_label">Distancia</string>
     <string name="fragment_races_list_no_races_label">Aquí aparecera la lista de carreras  registradas</string>
     <string name="fragment_last_race_no_races_label">No hay carreras registradas aún</string>

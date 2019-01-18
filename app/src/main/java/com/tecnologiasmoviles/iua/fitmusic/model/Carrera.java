@@ -1,7 +1,8 @@
 package com.tecnologiasmoviles.iua.fitmusic.model;
 
-import com.tecnologiasmoviles.iua.fitmusic.model.exception.RaceModelException;
-import com.tecnologiasmoviles.iua.fitmusic.utils.DateUtils;
+import android.os.Build;
+
+import com.tecnologiasmoviles.iua.fitmusic.utils.TimeUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -10,20 +11,26 @@ import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class Carrera implements Serializable {
     private UUID id_carrera;
-    private String descripcion = "";
-    private double distancia = 0d;
-    private Date duracion = null;
-    private Date ritmo = null;
-    private Date fechaCarrera = null;
+    private String descripcion;
+    // distancia en metros
+    private long distancia;
+    // duracion en ms
+    private long duracion;
+    // ritmo en ms
+    private long ritmo;
+    private Date fechaCarrera;
+    private Tramo tramoMasRapido;
+    private List<Tramo> tramos;
     private List<Punto> puntos;
 
     public Carrera() {}
 
-    public Carrera(UUID id_carrera, String descripcion, double distancia, Date duracion, Date ritmo, Date fechaCarrera) {
+    public Carrera(UUID id_carrera, String descripcion, long distancia, long duracion, long ritmo, Date fechaCarrera) {
         this.id_carrera = id_carrera;
         this.descripcion = descripcion;
         this.distancia = distancia;
@@ -32,13 +39,15 @@ public class Carrera implements Serializable {
         this.fechaCarrera = fechaCarrera;
     }
 
-    public Carrera(UUID id_carrera, String descripcion, double distancia, Date duracion, Date ritmo, Date fechaCarrera, List<Punto> puntos) {
+    public Carrera(UUID id_carrera, String descripcion, long distancia, long duracion, long ritmo, Date fechaCarrera, Tramo tramoMasRapido, List<Tramo> tramos, List<Punto> puntos) {
         this.id_carrera = id_carrera;
         this.descripcion = descripcion;
         this.distancia = distancia;
         this.duracion = duracion;
         this.ritmo = ritmo;
         this.fechaCarrera = fechaCarrera;
+        this.tramoMasRapido = tramoMasRapido;
+        this.tramos = tramos;
         this.puntos = puntos;
     }
 
@@ -58,27 +67,27 @@ public class Carrera implements Serializable {
         this.descripcion = descripcion;
     }
 
-    public double getDistancia() {
+    public long getDistancia() {
         return distancia;
     }
 
-    public void setDistancia(double distancia) {
+    public void setDistancia(long distancia) {
         this.distancia = distancia;
     }
 
-    public Date getDuracion() {
+    public long getDuracion() {
         return duracion;
     }
 
-    public void setDuracion(Date duracion) {
+    public void setDuracion(long duracion) {
         this.duracion = duracion;
     }
 
-    public Date getRitmo() {
+    public long getRitmo() {
         return ritmo;
     }
 
-    public void setRitmo(Date ritmo) {
+    public void setRitmo(long ritmo) {
         this.ritmo = ritmo;
     }
 
@@ -90,35 +99,68 @@ public class Carrera implements Serializable {
         this.fechaCarrera = fechaCarrera;
     }
 
+    public Tramo getTramoMasRapido() {
+        return tramoMasRapido;
+    }
+
+    public void setTramoMasRapido(Tramo tramoMasRapido) {
+        this.tramoMasRapido = tramoMasRapido;
+    }
+
+    public List<Tramo> getTramos() {
+        return tramos;
+    }
+
+    public void setTramos(List<Tramo> tramos) {
+        this.tramos = tramos;
+    }
+
     public List<Punto> getPuntos() {
         return puntos;
+    }
+
+    public Punto getPuntoPorId(UUID idPunto) {
+        List<Punto> puntos = getPuntos();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            Optional<Punto> pointFound = puntos.stream()
+                               .filter(punto -> punto.getIdPunto().equals(idPunto))
+                               .findFirst();
+            return pointFound.get();
+        } else {
+            for (Punto punto : puntos) {
+                if (punto.getIdPunto().equals(idPunto)) {
+                    return punto;
+                }
+            }
+        }
+        return null;
+    }
+
+    public int getPointIndexByUUID(UUID idPunto) {
+        List<Punto> puntos = getPuntos();
+        for (int i = 0; i < puntos.size(); i++) {
+            if (puntos.get(i).getIdPunto().equals(idPunto)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     public void setPuntos(List<Punto> puntos) {
         this.puntos = puntos;
     }
 
-    public static void verificarDatos(Carrera carrera) throws RaceModelException {
-        if (carrera.getDescripcion().trim().length() == 0) {
-            throw new RaceModelException("Debes ingresar una descripcion para la carrera");
-        }
-        if (String.valueOf(carrera.getDistancia()).trim().length() == 0 || carrera.getDistancia() <= 0) {
-            throw new RaceModelException("Debes ingresar una distancia para la carrera");
-        }
-        if (DateUtils.getMinutesOfDate(carrera.getDuracion()) <= 0) {
-            throw new RaceModelException("Debes ingresar una duracion para la carrera");
-        }
-        if (DateUtils.getMinutesOfDate(carrera.getRitmo()) <= 0) {
-            throw new RaceModelException("Debes ingresar el ritmo de la carrera");
-        }
-    }
-
     @Override
     public String toString() {
+        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+        float distanceToKms = distancia/1000f;
+
         return "id_carrera: " + id_carrera + ", descripcion: " + descripcion +
-                ", distancia: " + distancia + ", duracion: " + duracion +
-                ", ritmo: " + ritmo + ", fechaCarrera: " + fechaCarrera +
-                ", puntos: (" + puntos + ")";
+                ", distancia: " + String.format("%.2f", distanceToKms) + " km" +
+                ", duracion: " + TimeUtils.milliSecondsToTimer(duracion) +
+                ", ritmo: " + TimeUtils.milliSecondsToTimer(ritmo) + ", fechaCarrera: " + formatter.format(fechaCarrera) +
+                ", tramo_mas_rapido: " + tramoMasRapido +
+                ", tramos: " + tramos + ", puntos: " + puntos;
     }
 
     public static JSONObject toJSONObject(Carrera carrera) throws JSONException {
@@ -129,20 +171,8 @@ public class Carrera implements Serializable {
         raceObject.put("id_carrera", String.valueOf(carrera.getIdCarrera()));
         raceObject.put("descripcion", carrera.getDescripcion());
         raceObject.put("distancia", carrera.getDistancia());
-
-        JSONObject raceDurationObject = new JSONObject();
-        raceDurationObject.put("horas", DateUtils.getHourOfDate(carrera.getDuracion()));
-        raceDurationObject.put("minutos", DateUtils.getMinutesOfDate(carrera.getDuracion()));
-        raceDurationObject.put("segundos", DateUtils.getSecondsOfDate(carrera.getDuracion()));
-
-        raceObject.put("duracion", raceDurationObject);
-
-        JSONObject raceRithmnObject = new JSONObject();
-        raceRithmnObject.put("horas", DateUtils.getHourOfDate(carrera.getRitmo()));
-        raceRithmnObject.put("minutos", DateUtils.getMinutesOfDate(carrera.getRitmo()));
-        raceRithmnObject.put("segundos", DateUtils.getSecondsOfDate(carrera.getRitmo()));
-
-        raceObject.put("ritmo", raceRithmnObject);
+        raceObject.put("duracion", carrera.getDuracion());
+        raceObject.put("ritmo", carrera.getRitmo());
         raceObject.put("fecha_carrera", formatter.format(carrera.getFechaCarrera()));
 
         return raceObject;

@@ -1,9 +1,6 @@
 package com.tecnologiasmoviles.iua.fitmusic.view;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.InflateException;
@@ -15,8 +12,13 @@ import android.widget.TextView;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.tecnologiasmoviles.iua.fitmusic.R;
 import com.tecnologiasmoviles.iua.fitmusic.model.Carrera;
+import com.tecnologiasmoviles.iua.fitmusic.utils.TimeUtils;
 
 import java.text.SimpleDateFormat;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 public class DetailRaceActivity extends AppCompatActivity
 //        implements OnMapReadyCallback
@@ -36,7 +38,7 @@ public class DetailRaceActivity extends AppCompatActivity
     TextView raceDateTextViewRaceDetail;
     TextView raceDistanceTextViewRaceDetail;
     TextView raceDurationTextViewRaceDetail;
-    TextView raceRithmTextViewRaceDetail;
+    TextView raceRythmnTextViewRaceDetail;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,7 +60,7 @@ public class DetailRaceActivity extends AppCompatActivity
         raceDateTextViewRaceDetail = findViewById(R.id.raceDateTextViewBS);
         raceDistanceTextViewRaceDetail = findViewById(R.id.raceDistanceTextViewBS);
         raceDurationTextViewRaceDetail = findViewById(R.id.raceDurationTextViewBS);
-        raceRithmTextViewRaceDetail = findViewById(R.id.raceRithmTextViewBS);
+        raceRythmnTextViewRaceDetail = findViewById(R.id.raceRythmnTextViewBS);
 
         Carrera raceDetail = (Carrera) getIntent().getSerializableExtra("raceData");
 
@@ -104,10 +106,17 @@ public class DetailRaceActivity extends AppCompatActivity
 
     private void setRaceFields(Carrera raceDetail) {
         raceDescriptionTextViewRaceDetail.setText(raceDetail.getDescripcion());
-        raceDateTextViewRaceDetail.setText(new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(raceDetail.getFechaCarrera()));
-        raceDistanceTextViewRaceDetail.setText(String.valueOf(raceDetail.getDistancia()));
-        raceDurationTextViewRaceDetail.setText(new SimpleDateFormat("HH:mm:ss").format(raceDetail.getDuracion()));
-        raceRithmTextViewRaceDetail.setText(new SimpleDateFormat("HH:mm:ss").format(raceDetail.getRitmo()));
+
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy - HH:mm");
+        String raceDateFormatted = formatter.format(raceDetail.getFechaCarrera()) + " hs";
+
+        raceDateTextViewRaceDetail.setText(raceDateFormatted);
+
+        float raceDistanceToKms = raceDetail.getDistancia() / 1000f;
+        raceDistanceTextViewRaceDetail.setText(String.format("%.2f", raceDistanceToKms));
+
+        raceDurationTextViewRaceDetail.setText(TimeUtils.milliSecondsToTimer(raceDetail.getDuracion()));
+        raceRythmnTextViewRaceDetail.setText(TimeUtils.milliSecondsToTimer(raceDetail.getRitmo()));
     }
 
     @Override

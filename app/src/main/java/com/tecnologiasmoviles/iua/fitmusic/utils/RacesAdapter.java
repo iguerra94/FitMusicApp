@@ -54,23 +54,20 @@ public class RacesAdapter extends BaseAdapter {
 
         // Race Distance
         TextView raceDistanceTextView = convertView.findViewById(R.id.raceDistanceTextView);
-        raceDistanceTextView.setText(String.valueOf(carrera.getDistancia()));
+
+        float raceDistanceToKms = carrera.getDistancia() / 1000f;
+        raceDistanceTextView.setText(String.format("%.2f", raceDistanceToKms));
 
         // Race Duration
         TextView raceDurationTextView = convertView.findViewById(R.id.raceDurationTextView);
-        raceDurationTextView.setText(new SimpleDateFormat("HH:mm:ss").format(carrera.getDuracion()));
+        raceDurationTextView.setText(TimeUtils.milliSecondsToTimer(carrera.getDuracion()));
 
         // Race Date
         TextView raceDateTextView = convertView.findViewById(R.id.raceDateTextView);
         raceDateTextView.setText(new SimpleDateFormat("dd/MM/yyyy").format(carrera.getFechaCarrera()));
 
         // Navigation to Player Activity
-        convertView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                goToRaceDetailActivity(carrera);
-            }
-        });
+        convertView.setOnClickListener(v -> goToRaceDetailActivity(carrera));
 
         return convertView;
     }

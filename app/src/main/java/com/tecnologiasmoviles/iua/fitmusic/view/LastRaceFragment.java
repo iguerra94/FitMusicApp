@@ -1,5 +1,6 @@
 package com.tecnologiasmoviles.iua.fitmusic.view;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.InflateException;
@@ -14,6 +15,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.tecnologiasmoviles.iua.fitmusic.R;
 import com.tecnologiasmoviles.iua.fitmusic.model.Carrera;
 import com.tecnologiasmoviles.iua.fitmusic.utils.RacesJSONParser;
+import com.tecnologiasmoviles.iua.fitmusic.utils.TimeUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,18 +38,16 @@ public class LastRaceFragment extends Fragment
 //    private MapView mMapView;
     private static final int DEFAULT_ZOOM = 16;
 
-    ImageView mBSArrowDown;
-    ImageView mBSArrowUp;
+    private ImageView mBSArrowDown;
+    private ImageView mBSArrowUp;
 
-    LinearLayout linearLayoutNoRaces;
+    private View bsRaceInfoLastRace;
 
-    View bsRaceInfoLastRace;
-
-    TextView raceDescriptionTextViewLastRace;
-    TextView raceDateTextViewLastRace;
-    TextView raceDistanceTextViewLastRace;
-    TextView raceDurationTextViewLastRace;
-    TextView raceRithmTextViewLastRace;
+    private TextView raceDescriptionTextViewLastRace;
+    private TextView raceDateTextViewLastRace;
+    private TextView raceDistanceTextViewLastRace;
+    private TextView raceDurationTextViewLastRace;
+    private TextView raceRythmnTextViewLastRace;
 
     public LastRaceFragment() {}
 
@@ -58,14 +58,14 @@ public class LastRaceFragment extends Fragment
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_last_race, container, false);
 
-        linearLayoutNoRaces = view.findViewById(R.id.linearLayoutNoRaces);
+        LinearLayout linearLayoutNoRaces = view.findViewById(R.id.linearLayoutNoRaces);
         bsRaceInfoLastRace = view.findViewById(R.id.bs_race_info_last_race);
 
         raceDescriptionTextViewLastRace = view.findViewById(R.id.raceDescriptionTextViewBS);
         raceDateTextViewLastRace = view.findViewById(R.id.raceDateTextViewBS);
         raceDistanceTextViewLastRace = view.findViewById(R.id.raceDistanceTextViewBS);
         raceDurationTextViewLastRace = view.findViewById(R.id.raceDurationTextViewBS);
-        raceRithmTextViewLastRace = view.findViewById(R.id.raceRithmTextViewBS);
+        raceRythmnTextViewLastRace = view.findViewById(R.id.raceRythmnTextViewBS);
 
         try {
             File file = new File(getActivity().getFilesDir(), "races_data.json");
@@ -133,10 +133,17 @@ public class LastRaceFragment extends Fragment
 
     private void setRaceFields(Carrera lastRace) {
         raceDescriptionTextViewLastRace.setText(lastRace.getDescripcion());
-        raceDateTextViewLastRace.setText(new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(lastRace.getFechaCarrera()));
-        raceDistanceTextViewLastRace.setText(String.valueOf(lastRace.getDistancia()));
-        raceDurationTextViewLastRace.setText(new SimpleDateFormat("HH:mm:ss").format(lastRace.getDuracion()));
-        raceRithmTextViewLastRace.setText(new SimpleDateFormat("HH:mm:ss").format(lastRace.getRitmo()));
+
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy - HH:mm");
+        String raceDateFormatted = formatter.format(lastRace.getFechaCarrera()) + " hs";
+
+        raceDateTextViewLastRace.setText(raceDateFormatted);
+
+        float raceDistanceToKms = lastRace.getDistancia() / 1000f;
+        raceDistanceTextViewLastRace.setText(String.format("%.2f", raceDistanceToKms));
+
+        raceDurationTextViewLastRace.setText(TimeUtils.milliSecondsToTimer(lastRace.getDuracion()));
+        raceRythmnTextViewLastRace.setText(TimeUtils.milliSecondsToTimer(lastRace.getRitmo()));
     }
 
     @Override

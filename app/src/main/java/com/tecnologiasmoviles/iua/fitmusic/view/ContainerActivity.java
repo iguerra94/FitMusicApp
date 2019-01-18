@@ -62,6 +62,8 @@ public class ContainerActivity extends AppCompatActivity implements BottomNaviga
         SharedPrefsManager.getInstance(this).getSharedPrefs().registerOnSharedPreferenceChangeListener(this);
 
         AndroidNetworking.initialize(getApplicationContext());
+
+//        new TestRaceAsyncTask().execute();
     }
 
     @Override
@@ -192,4 +194,103 @@ public class ContainerActivity extends AppCompatActivity implements BottomNaviga
 
         Log.d(LOG_TAG, "onStop Container Activity");
     }
+
+//    private class TestRaceAsyncTask extends AsyncTask<Void, Void, Void> {
+//        List<Integer> distancias = new ArrayList<>();
+//        List<Integer> duraciones = new ArrayList<>();
+//
+//        @Override
+//        protected void onPreExecute() {
+//            SharedPrefsManager.getInstance(ContainerActivity.this).saveLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY, 0);
+//            SharedPrefsManager.getInstance(ContainerActivity.this).saveLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY, 0);
+//            SharedPrefsManager.getInstance(ContainerActivity.this).saveLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_DISTANCE_KEY, 0);
+//            SharedPrefsManager.getInstance(ContainerActivity.this).saveBoolean(SharedPrefsKeys.RACE_SHOULD_MEASURE_RYTHMN_KEY, false);
+//
+//            distancias.add(529);
+//            distancias.add(216);
+//            distancias.add(258);
+//            distancias.add(353);
+//            distancias.add(551);
+//
+//            duraciones.add(427000);
+//            duraciones.add(612000);
+//            duraciones.add(802000);
+//            duraciones.add(1075000);
+//            duraciones.add(1465000);
+//        }
+//
+//        @Override
+//        protected Void doInBackground(Void... voids) {
+//            for (int i = 0; i < distancias.size(); i++) {
+//                long distanceAccumulated = SharedPrefsManager.getInstance(ContainerActivity.this).readLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY);
+//                long currentDistance = distancias.get(i);
+//                long newDistance = distanceAccumulated + currentDistance;
+//
+//                long currentDuration = duraciones.get(i);
+//
+//                float distanceKms = (newDistance / 1000f);
+//
+//                SharedPrefsManager.getInstance(ContainerActivity.this).saveLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY, newDistance);
+//
+//                Log.d(LOG_TAG, "ITERACION: " + (i+1));
+//
+//                if (newDistance < 1000) {
+//                    Log.d(LOG_TAG, "DISTANCIA: " + String.format("%.2f", distanceKms) + " km, DURACION: " + TimeUtils.milliSecondsToTimer(currentDuration));
+//                }
+//
+//                if (newDistance >= 1000) { // Distance is greater than or equal to 1 km.
+//                    long rythmn = SharedPrefsManager.getInstance(ContainerActivity.this).readLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY);
+//
+//                    if (rythmn == 0) {// First time to meausure rythhmn
+//                        float distanceInKms = (newDistance / 1000f);
+//                        distanceInKms = Math.round(distanceInKms*100f)/100f;
+//
+//                        long newRythmn = (int) (currentDuration / distanceInKms);
+//
+//                        Log.d(LOG_TAG, "DISTANCIA: " + String.format("%.2f", distanceInKms) + " km, DURACION: " + TimeUtils.milliSecondsToTimer(currentDuration) + ", RITMO TOTAL: " + TimeUtils.milliSecondsToTimer(newRythmn));
+//
+//                        SharedPrefsManager.getInstance(ContainerActivity.this).saveLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY, newRythmn);
+//                        SharedPrefsManager.getInstance(ContainerActivity.this).saveLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_TIME_KEY, currentDuration);
+//                        SharedPrefsManager.getInstance(ContainerActivity.this).saveLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_DISTANCE_KEY, newDistance);
+//                    }
+//
+//                    long lastUpdatedRythmnDistance = SharedPrefsManager.getInstance(ContainerActivity.this).readLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_DISTANCE_KEY);
+//
+//                    if (newDistance >= lastUpdatedRythmnDistance + 500) {
+//                        SharedPrefsManager.getInstance(ContainerActivity.this).saveBoolean(SharedPrefsKeys.RACE_SHOULD_MEASURE_RYTHMN_KEY, true);
+//                    }
+//
+//                    boolean shouldMeasureRythmn = SharedPrefsManager.getInstance(ContainerActivity.this).readBoolean(SharedPrefsKeys.RACE_SHOULD_MEASURE_RYTHMN_KEY);
+//
+//                    if (shouldMeasureRythmn) {
+//                        long lastUpdatedRythmnTime = SharedPrefsManager.getInstance(ContainerActivity.this).readLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_TIME_KEY);
+//                        long deltaTime = currentDuration - lastUpdatedRythmnTime;
+//
+//                        lastUpdatedRythmnDistance = SharedPrefsManager.getInstance(ContainerActivity.this).readLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_DISTANCE_KEY);
+//                        float distanceInKms = ((newDistance - lastUpdatedRythmnDistance) / 1000f);
+//                        distanceInKms = Math.round(distanceInKms*100f)/100f;
+//
+//                        long currentRythmn = (int) (deltaTime / distanceInKms);
+//
+//                        long newRythmn = (int) ((rythmn + currentRythmn) / 2);
+//
+//                        Log.d(LOG_TAG, "DISTANCIA: " + String.format("%.2f", newDistance/1000f) + " km, DELTA DISTANCIA: " + String.format("%.2f", distanceInKms) + " km, DELTA DURACION: " + TimeUtils.milliSecondsToTimer(deltaTime) + ", DURACION: " + TimeUtils.milliSecondsToTimer(currentDuration) + ", RITMO ACTUAL: " + TimeUtils.milliSecondsToTimer(currentRythmn) + ", RITMO TOTAL: " + TimeUtils.milliSecondsToTimer(newRythmn));
+//
+//                        SharedPrefsManager.getInstance(ContainerActivity.this).saveLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY, newRythmn);
+//                        SharedPrefsManager.getInstance(ContainerActivity.this).saveLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_TIME_KEY, currentDuration);
+//                        SharedPrefsManager.getInstance(ContainerActivity.this).saveLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_DISTANCE_KEY, newDistance);
+//                        SharedPrefsManager.getInstance(ContainerActivity.this).saveBoolean(SharedPrefsKeys.RACE_SHOULD_MEASURE_RYTHMN_KEY, false);
+//                    } else {
+//                        if (rythmn > 0) {
+//                            float distanceInKms = (newDistance / 1000f);
+//                            Log.d(LOG_TAG, "DISTANCIA: " + String.format("%.2f", distanceInKms) + " km, DURACION: " + TimeUtils.milliSecondsToTimer(currentDuration) + ", RITMO TOTAL: " + TimeUtils.milliSecondsToTimer(rythmn));
+//                        }
+//                    }
+//
+//                }
+//            }
+//            return null;
+//        }
+//
+//    }
 }

@@ -39,6 +39,7 @@ import com.tecnologiasmoviles.iua.fitmusic.R;
 import com.tecnologiasmoviles.iua.fitmusic.model.Carrera;
 import com.tecnologiasmoviles.iua.fitmusic.model.Punto;
 import com.tecnologiasmoviles.iua.fitmusic.model.Song;
+import com.tecnologiasmoviles.iua.fitmusic.model.Tramo;
 import com.tecnologiasmoviles.iua.fitmusic.model.exception.RaceModelException;
 import com.tecnologiasmoviles.iua.fitmusic.utils.DateUtils;
 import com.tecnologiasmoviles.iua.fitmusic.utils.FirebaseRefs;
@@ -57,6 +58,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -197,8 +199,6 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         mediaPlayerManager.create();
         mediaPlayerManager.getMediaPlayer().setOnCompletionListener(this);
 
-        carrera = new Carrera();
-
         raceDescriptionEditText = view.findViewById(R.id.raceDescriptionEditText);
         newRaceDescriptionTV = view.findViewById(R.id.newRaceDescriptionTextView);
         newRaceDateTV = view.findViewById(R.id.newRaceDateTextView);
@@ -257,8 +257,7 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
 
                     SharedPrefsManager.getInstance(getActivity()).saveListPoints(SharedPrefsKeys.RACE_LOCATION_POINTS_KEY, puntos);
 
-                    carrera.setFechaCarrera(now);
-                    setInitialTime(carrera.getFechaCarrera().getTime());
+                    setInitialTime(now.getTime());
 
                     @SuppressLint("SimpleDateFormat") SimpleDateFormat formatterDateTime = new SimpleDateFormat("dd/MM/yyyy - HH:mm");
 
@@ -273,7 +272,8 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
                     SharedPrefsManager.getInstance(getActivity()).saveString(SharedPrefsKeys.RACE_DATE_STRING_KEY, dateFormattedDateTime);
                     SharedPrefsManager.getInstance(getActivity()).saveString(SharedPrefsKeys.RACE_DESCRIPTION_KEY, raceDescription);
 
-                    SharedPrefsManager.getInstance(getActivity()).saveLong(SharedPrefsKeys.INITIAL_RACE_TIME_KEY, carrera.getFechaCarrera().getTime());
+                    SharedPrefsManager.getInstance(getActivity()).saveLong(SharedPrefsKeys.INITIAL_RACE_TIME_KEY, now.getTime());
+                    Log.d(LOG_TAG, "fechaCarrera: " + dateFormattedDateTime);
                 }
 
                 @Override
@@ -425,38 +425,50 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         usersDBRef.child(registrationToken + "/last_race_date_miliseconds").setValue(time);
     }
 
-    public void registerRace() {
-        try {
-            verificarCamposVacios();
+    private void registerRace() {
+        carrera = new Carrera();
 
-            carrera.setDescripcion(raceDescriptionEditText.getText().toString());
-            carrera.setDistancia(100);
+        carrera.setIdCarrera(UUID.randomUUID());
 
-            carrera.setDuracion(DateUtils.setTimeOfDate(2, 3, 2));
-            carrera.setRitmo(DateUtils.setTimeOfDate(2, 3, 2));
+        Date raceDate = new Date(SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.INITIAL_RACE_TIME_KEY));
+        carrera.setFechaCarrera(raceDate);
 
-            if (getActivity() != null) {
+        carrera.setDescripcion(SharedPrefsManager.getInstance(getActivity()).readString(SharedPrefsKeys.RACE_DESCRIPTION_KEY));
+        carrera.setDistancia(SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY));
 
-                try {
-                    File racesJSONFile = new File(getActivity().getFilesDir(), "races_data.json");
+        String raceDuration = SharedPrefsManager.getInstance(getActivity()).readString(SharedPrefsKeys.RACE_DURATION_KEY);
+        carrera.setDuracion(TimeUtils.parseDurationFromStringToMs(raceDuration));
+        carrera.setRitmo(SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY));
 
-                    RacesJSONParser.saveRaceData(getActivity(), racesJSONFile, carrera);
-                    vaciarCampos();
-                    Toast.makeText(getActivity(), "Se ha creado la carrera de manera exitosa!", Toast.LENGTH_LONG).show();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        List<Tramo> tramos = SharedPrefsManager.getInstance(getActivity()).readListSections(SharedPrefsKeys.RACE_SECTIONS_KEY);
+        carrera.setTramos(tramos);
+
+        List<Punto> puntos = SharedPrefsManager.getInstance(getActivity()).readListPoints(SharedPrefsKeys.RACE_LOCATION_POINTS_KEY);
+        // Last Race Point
+        puntos.get(puntos.size()-1).setIsLastRacePoint(true);
+        carrera.setPuntos(puntos);
+
+        Tramo tramoMasRapido = tramos.get(0);
+        for (int i = 1; i < tramos.size(); i++) {
+            if (tramos.get(i).getRitmoTramo() < tramoMasRapido.getRitmoTramo()) {
+                tramoMasRapido = tramos.get(i);
             }
-
-        } catch (RaceModelException e) {
-            CoordinatorLayout coordinatorLayout = Objects.requireNonNull(getActivity()).findViewById(R.id.cl);
-            Snackbar snack = Snackbar.make(coordinatorLayout, e.getMessage(), Snackbar.LENGTH_LONG);
-            snack.show();
+            if (i % 2 == 0) {
+                int indexOfPointThatWouldDisplayDistanceInfo = carrera.getPointIndexByUUID(tramos.get(i).getIdPuntoFin());
+                carrera.getPuntos().get(indexOfPointThatWouldDisplayDistanceInfo).setShouldDisplayDistance(true);
+            }
         }
-    }
+        carrera.setTramoMasRapido(tramoMasRapido);
 
-    private void vaciarCampos() {
-        raceDescriptionEditText.setText("");
+        if (getActivity() != null) {
+            try {
+                File racesJSONFile = new File(getActivity().getFilesDir(), "races_data.json");
+                RacesJSONParser.saveRaceData(getActivity(), racesJSONFile, carrera);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
     private void verificarCamposVacios() throws RaceModelException {
@@ -550,8 +562,8 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         super.onStart();
         Log.d(LOG_TAG, "ON START");
         setInitialTime(SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.INITIAL_RACE_TIME_KEY));
-        SharedPrefsManager.getInstance(getActivity()).getSharedPrefs().registerOnSharedPreferenceChangeListener(this);
         Log.d(LOG_TAG, "initialTime: " + getInitialTime());
+        SharedPrefsManager.getInstance(getActivity()).getSharedPrefs().registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
@@ -827,6 +839,7 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         protected void onProgressUpdate(String... values) {
             if (values[0].equals("FINISH RACE")) {
                 finishRace();
+                registerRace();
             }
         }
 

@@ -7,6 +7,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.tecnologiasmoviles.iua.fitmusic.BuildConfig;
 import com.tecnologiasmoviles.iua.fitmusic.model.Punto;
+import com.tecnologiasmoviles.iua.fitmusic.model.Tramo;
 
 import java.util.List;
 
@@ -67,6 +68,23 @@ public class SharedPrefsManager {
         return sharedPreferences.getLong(KEY, 0);
     }
 
+    public void saveListSections(String KEY, List<Tramo> sectionsList) {
+        Gson gson = new Gson();
+        String json = gson.toJson(sectionsList);
+
+        editor.putString(KEY, json);
+        editor.apply();
+    }
+
+    public List<Tramo> readListSections(String KEY) {
+        Gson gson = new Gson();
+
+        String response = sharedPreferences.getString(KEY, "");
+        List<Tramo> sectionsList = gson.fromJson(response, new TypeToken<List<Tramo>>() {}.getType());
+
+        return sectionsList;
+    }
+
     public void saveListPoints(String KEY, List<Punto> pointsList) {
         Gson gson = new Gson();
         String json = gson.toJson(pointsList);
@@ -102,6 +120,8 @@ public class SharedPrefsManager {
         SharedPrefsManager.getInstance(context).saveString(SharedPrefsKeys.RACE_CURRENT_FIREBASE_KEY, "");
         SharedPrefsManager.getInstance(context).saveString(SharedPrefsKeys.RACE_DURATION_KEY, "");
         SharedPrefsManager.getInstance(context).saveListPoints(SharedPrefsKeys.RACE_LOCATION_POINTS_KEY, null);
+        SharedPrefsManager.getInstance(context).saveListSections(SharedPrefsKeys.RACE_SECTIONS_KEY, null);
+        SharedPrefsManager.getInstance(context).saveString(SharedPrefsKeys.RACE_ACTUAL_SECTION_INITIAL_POINT_KEY, "");
     }
 
 }

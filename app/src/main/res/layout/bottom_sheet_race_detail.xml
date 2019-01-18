@@ -123,6 +123,16 @@
                 android:layout_marginStart="4dp"
                 android:text="@string/race_list_cell_distance_unit_label"
                 android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/textview5"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:layout_marginStart="4dp"
+                android:text="(distancia)"
+                android:textSize="12sp" />
+
         </LinearLayout>
 
         <LinearLayout
@@ -146,6 +156,15 @@
                 android:gravity="center_vertical"
                 android:textSize="16sp" />
 
+            <TextView
+                android:id="@+id/textview6"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:layout_marginStart="4dp"
+                android:text="(duracion)"
+                android:textSize="12sp" />
+
         </LinearLayout>
 
         <LinearLayout
@@ -163,11 +182,20 @@
                 />
 
             <TextView
-                android:id="@+id/raceRithmTextViewBS"
+                android:id="@+id/raceRythmnTextViewBS"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
                 android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/textview7"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:layout_marginStart="4dp"
+                android:text="(ritmo)"
+                android:textSize="12sp" />
 
         </LinearLayout>
 

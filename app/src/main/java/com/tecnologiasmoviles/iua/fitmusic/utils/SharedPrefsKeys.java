@@ -5,6 +5,8 @@ public class SharedPrefsKeys {
     public static final String APP_IS_OPENED_KEY = "app_is_opened";
     public static final String IS_RUNNING_KEY = "is_running";
     public static final String RACE_LOCATION_POINTS_KEY = "race_location_points";
+    public static final String RACE_SECTIONS_KEY = "race_sections";
+    public static final String RACE_ACTUAL_SECTION_INITIAL_POINT_KEY = "race_actual_section_initial_point";
     public static final String RACE_DURATION_KEY = "race_duration";
     public static final String RACE_CURRENT_DISTANCE_KEY = "race_current_distance";
     public static final String RACE_CURRENT_RYTHMN_KEY = "race_current_rythmn";
