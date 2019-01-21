@@ -1,9 +1,8 @@
 package com.tecnologiasmoviles.iua.fitmusic.model;
 
-import android.os.Build;
-
 import com.tecnologiasmoviles.iua.fitmusic.utils.TimeUtils;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -11,7 +10,6 @@ import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public class Carrera implements Serializable {
@@ -24,9 +22,7 @@ public class Carrera implements Serializable {
     // ritmo en ms
     private long ritmo;
     private Date fechaCarrera;
-    private Tramo tramoMasRapido;
     private List<Tramo> tramos;
-    private List<Punto> puntos;
 
     public Carrera() {}
 
@@ -39,16 +35,14 @@ public class Carrera implements Serializable {
         this.fechaCarrera = fechaCarrera;
     }
 
-    public Carrera(UUID id_carrera, String descripcion, long distancia, long duracion, long ritmo, Date fechaCarrera, Tramo tramoMasRapido, List<Tramo> tramos, List<Punto> puntos) {
+    public Carrera(UUID id_carrera, String descripcion, long distancia, long duracion, long ritmo, Date fechaCarrera, List<Tramo> tramos) {
         this.id_carrera = id_carrera;
         this.descripcion = descripcion;
         this.distancia = distancia;
         this.duracion = duracion;
         this.ritmo = ritmo;
         this.fechaCarrera = fechaCarrera;
-        this.tramoMasRapido = tramoMasRapido;
         this.tramos = tramos;
-        this.puntos = puntos;
     }
 
     public UUID getIdCarrera() {
@@ -99,55 +93,12 @@ public class Carrera implements Serializable {
         this.fechaCarrera = fechaCarrera;
     }
 
-    public Tramo getTramoMasRapido() {
-        return tramoMasRapido;
-    }
-
-    public void setTramoMasRapido(Tramo tramoMasRapido) {
-        this.tramoMasRapido = tramoMasRapido;
-    }
-
     public List<Tramo> getTramos() {
         return tramos;
     }
 
     public void setTramos(List<Tramo> tramos) {
         this.tramos = tramos;
-    }
-
-    public List<Punto> getPuntos() {
-        return puntos;
-    }
-
-    public Punto getPuntoPorId(UUID idPunto) {
-        List<Punto> puntos = getPuntos();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            Optional<Punto> pointFound = puntos.stream()
-                               .filter(punto -> punto.getIdPunto().equals(idPunto))
-                               .findFirst();
-            return pointFound.get();
-        } else {
-            for (Punto punto : puntos) {
-                if (punto.getIdPunto().equals(idPunto)) {
-                    return punto;
-                }
-            }
-        }
-        return null;
-    }
-
-    public int getPointIndexByUUID(UUID idPunto) {
-        List<Punto> puntos = getPuntos();
-        for (int i = 0; i < puntos.size(); i++) {
-            if (puntos.get(i).getIdPunto().equals(idPunto)) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    public void setPuntos(List<Punto> puntos) {
-        this.puntos = puntos;
     }
 
     @Override
@@ -159,8 +110,7 @@ public class Carrera implements Serializable {
                 ", distancia: " + String.format("%.2f", distanceToKms) + " km" +
                 ", duracion: " + TimeUtils.milliSecondsToTimer(duracion) +
                 ", ritmo: " + TimeUtils.milliSecondsToTimer(ritmo) + ", fechaCarrera: " + formatter.format(fechaCarrera) +
-                ", tramo_mas_rapido: " + tramoMasRapido +
-                ", tramos: " + tramos + ", puntos: " + puntos;
+                ", tramos: " + tramos;
     }
 
     public static JSONObject toJSONObject(Carrera carrera) throws JSONException {
@@ -174,6 +124,14 @@ public class Carrera implements Serializable {
         raceObject.put("duracion", carrera.getDuracion());
         raceObject.put("ritmo", carrera.getRitmo());
         raceObject.put("fecha_carrera", formatter.format(carrera.getFechaCarrera()));
+
+        JSONArray raceSectionsArray = new JSONArray();
+
+        for (Tramo t: carrera.getTramos()) {
+            raceSectionsArray.put(Tramo.toJSONObject(t));
+        }
+
+        raceObject.put("tramos", raceSectionsArray);
 
         return raceObject;
     }

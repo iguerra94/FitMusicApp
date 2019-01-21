@@ -33,12 +33,12 @@
 
     </LinearLayout>
 
-    <!--<com.google.android.gms.maps.MapView-->
-    <!--android:id="@+id/map"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent"-->
-    <!--android:layout_marginTop="?attr/actionBarSize"-->
-    <!--android:visibility="gone" />-->
+    <com.google.android.gms.maps.MapView
+        android:id="@+id/map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="?attr/actionBarSize"
+        android:visibility="gone" />
 
     <include
         android:id="@+id/bs_race_info_last_race"

@@ -9,24 +9,35 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.MapsInitializer;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.maps.android.PolyUtil;
 import com.tecnologiasmoviles.iua.fitmusic.R;
 import com.tecnologiasmoviles.iua.fitmusic.model.Carrera;
+import com.tecnologiasmoviles.iua.fitmusic.model.Punto;
+import com.tecnologiasmoviles.iua.fitmusic.model.Tramo;
+import com.tecnologiasmoviles.iua.fitmusic.utils.MapsUtils;
 import com.tecnologiasmoviles.iua.fitmusic.utils.TimeUtils;
 
 import java.text.SimpleDateFormat;
+import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-public class DetailRaceActivity extends AppCompatActivity
-//        implements OnMapReadyCallback
-{
+public class DetailRaceActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private static final String LOG_TAG = DetailRaceActivity.class.getSimpleName();
 
-    //    private MapView mMapView;
+    private MapView mMapView;
     private static final int DEFAULT_ZOOM = 16;
 
     ImageView mBSArrowDown;
@@ -39,6 +50,8 @@ public class DetailRaceActivity extends AppCompatActivity
     TextView raceDistanceTextViewRaceDetail;
     TextView raceDurationTextViewRaceDetail;
     TextView raceRythmnTextViewRaceDetail;
+
+    private Carrera raceData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +66,7 @@ public class DetailRaceActivity extends AppCompatActivity
         getSupportActionBar().setTitle(getResources().getString(R.string.toolbar_title_detail_race));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-//        mMapView = findViewById(R.id.race_detail_map);
+        mMapView = findViewById(R.id.race_detail_map);
         bsRaceInfoRaceDetail = findViewById(R.id.bs_race_info);
 
         raceDescriptionTextViewRaceDetail = findViewById(R.id.raceDescriptionTextViewBS);
@@ -62,21 +75,21 @@ public class DetailRaceActivity extends AppCompatActivity
         raceDurationTextViewRaceDetail = findViewById(R.id.raceDurationTextViewBS);
         raceRythmnTextViewRaceDetail = findViewById(R.id.raceRythmnTextViewBS);
 
-        Carrera raceDetail = (Carrera) getIntent().getSerializableExtra("raceData");
+        raceData = (Carrera) getIntent().getSerializableExtra("raceData");
 
-        Log.d(LOG_TAG, raceDetail.getFechaCarrera().toString());
+        Log.d(LOG_TAG, raceData.getFechaCarrera().toString());
 
-        setRaceFields(raceDetail);
+        setRaceFields(raceData);
 
         setMap(savedInstanceState);
     }
 
     private void setMap(Bundle savedInstanceState) {
         try {
-//            MapsInitializer.initialize( this );
-//            mMapView = findViewById(R.id.race_detail_map);
-//            mMapView.onCreate(savedInstanceState);
-//            mMapView.getMapAsync(this);
+            MapsInitializer.initialize( this );
+            mMapView = findViewById(R.id.race_detail_map);
+            mMapView.onCreate(savedInstanceState);
+            mMapView.getMapAsync(this);
 
             mBSArrowDown = findViewById(R.id.bs_arrow_down);
             mBSArrowUp = findViewById(R.id.bs_arrow_up);
@@ -122,46 +135,80 @@ public class DetailRaceActivity extends AppCompatActivity
     @Override
     public void onPause() {
         super.onPause();
-//        mMapView.onPause();
+        mMapView.onPause();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        mMapView.onDestroy();
+        mMapView.onDestroy();
     }
 
     @Override
     public void onLowMemory() {
         super.onLowMemory();
-//        mMapView.onLowMemory();
+        mMapView.onLowMemory();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-//        mMapView.onResume();
+        mMapView.onResume();
     }
 
     /**
      * Manipulates the map when it's available.
      * This callback is triggered when the map is ready to be used.
      */
-//    @Override
-//    public void onMapReady(GoogleMap googleMap) {
-//        // Set LatLng coords of CRUC-IUA
-//        LatLng iuaLatLng = new LatLng(-31.433575, -64.275736);
-//
-//        // Add marker on that location
-//        googleMap.addMarker(new MarkerOptions()
-//                .title("CRUC-IUA")
-//                .snippet("Instituto Universitario Aeronautico.")
-//                .position(iuaLatLng));
-//
-//        // Move camera to point to that location
-//        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(iuaLatLng,
-//                DEFAULT_ZOOM));
-//    }
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        List<Tramo> raceSections = raceData.getTramos();
+
+        for (int i = 0; i < raceSections.size(); i++) {
+            List<Punto> sectionPoints = raceSections.get(i).getPuntosTramo();
+
+            // START MARKER
+            if (i == 0) {
+                Punto startRacePoint = sectionPoints.get(0);
+                MapsUtils.addStartRacePointMarker(this, startRacePoint, googleMap);
+            }
+
+            // FINISH MARKER
+            if (i == raceSections.size()-1) {
+                Punto lastRacePoint = sectionPoints.get(sectionPoints.size()-1);
+                MapsUtils.addLastRacePointMarker(this, lastRacePoint, googleMap);
+            }
+
+            // DISPLAY DISTANCE IN AN INFO WINDOW
+            if (i % 2 != 0) {
+                Punto lastSectionPoint = sectionPoints.get(i);
+                long sectionDistance = raceSections.get(i).getDistanciaTramo();
+                MapsUtils.addDistanceIcon(this, lastSectionPoint, sectionDistance, googleMap);
+            }
+
+            // DECODE SECTION POLYLINE
+            List<LatLng> decodedPath = PolyUtil.decode(raceSections.get(i).getSectionPolyline());
+
+            // DRAW SECTION POLYLINE
+            if (raceSections.get(i).getIsFastestSection()) {
+                Polyline fastestSectionPolyline = googleMap.addPolyline(new PolylineOptions().addAll(decodedPath));
+                fastestSectionPolyline.setTag("fastestSection");
+                MapsUtils.stylePolyline(fastestSectionPolyline);
+            } else {
+                Polyline sectionPolyline = googleMap.addPolyline(new PolylineOptions().addAll(decodedPath));
+                sectionPolyline.setTag("section");
+                MapsUtils.stylePolyline(sectionPolyline);
+            }
+
+        }
+
+        int sectionIndex = raceSections.size()/2;
+        Punto midPoint = raceSections.get(sectionIndex).getPuntosTramo().get(0);
+
+        // Move camera to point to that location
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(midPoint.getLat(), midPoint.getLon()), DEFAULT_ZOOM));
+        googleMap.getUiSettings().setScrollGesturesEnabled(false);
+    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -170,4 +217,5 @@ public class DetailRaceActivity extends AppCompatActivity
         }
         return super.onOptionsItemSelected(item);
     }
+
 }

@@ -101,7 +101,41 @@ public class SharedPrefsManager {
 
         return pointsList;
     }
-    
+
+    public void saveSectionObject(String KEY, Tramo tramo) {
+        Gson gson = new Gson();
+        String json = gson.toJson(tramo);
+
+        editor.putString(KEY, json);
+        editor.apply();
+    }
+
+    public Tramo readSectionObject(String KEY) {
+        Gson gson = new Gson();
+
+        String response = sharedPreferences.getString(KEY, "");
+        Tramo tramo = gson.fromJson(response, new TypeToken<Tramo>() {}.getType());
+
+        return tramo;
+    }
+
+    public void saveListEncodedPolylines(String KEY, List<String> encodedPolylinesList) {
+        Gson gson = new Gson();
+        String json = gson.toJson(encodedPolylinesList);
+
+        editor.putString(KEY, json);
+        editor.apply();
+    }
+
+    public List<String> readListEncodedPolylines(String KEY) {
+        Gson gson = new Gson();
+
+        String response = sharedPreferences.getString(KEY, "");
+        List<String> encodedPolylinesList = gson.fromJson(response, new TypeToken<List<String>>() {}.getType());
+
+        return encodedPolylinesList;
+    }
+
     public static void initRaceSharedPrefsKeys(Context context) {
         SharedPrefsManager.getInstance(context).saveBoolean(SharedPrefsKeys.IS_RUNNING_KEY, false);
         SharedPrefsManager.getInstance(context).saveBoolean(SharedPrefsKeys.RACE_GETTING_LAST_POINT_KEY, false);
@@ -120,8 +154,11 @@ public class SharedPrefsManager {
         SharedPrefsManager.getInstance(context).saveString(SharedPrefsKeys.RACE_CURRENT_FIREBASE_KEY, "");
         SharedPrefsManager.getInstance(context).saveString(SharedPrefsKeys.RACE_DURATION_KEY, "");
         SharedPrefsManager.getInstance(context).saveListPoints(SharedPrefsKeys.RACE_LOCATION_POINTS_KEY, null);
+        SharedPrefsManager.getInstance(context).saveSectionObject(SharedPrefsKeys.RACE_ACTUAL_SECTION_KEY, null);
+        SharedPrefsManager.getInstance(context).saveListPoints(SharedPrefsKeys.RACE_ACTUAL_SECTION_POINTS_KEY, null);
         SharedPrefsManager.getInstance(context).saveListSections(SharedPrefsKeys.RACE_SECTIONS_KEY, null);
-        SharedPrefsManager.getInstance(context).saveString(SharedPrefsKeys.RACE_ACTUAL_SECTION_INITIAL_POINT_KEY, "");
+        SharedPrefsManager.getInstance(context).saveListSections(SharedPrefsKeys.RACE_SECTIONS_KEY, null);
+        SharedPrefsManager.getInstance(context).saveListEncodedPolylines(SharedPrefsKeys.ENCODED_POLYLINES_LIST_KEY, null);
     }
 
 }

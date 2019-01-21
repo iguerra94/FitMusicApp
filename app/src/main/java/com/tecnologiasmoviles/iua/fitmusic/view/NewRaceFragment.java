@@ -31,17 +31,22 @@ import com.airbnb.lottie.LottieAnimationView;
 import com.androidnetworking.AndroidNetworking;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.tecnologiasmoviles.iua.fitmusic.R;
 import com.tecnologiasmoviles.iua.fitmusic.model.Carrera;
 import com.tecnologiasmoviles.iua.fitmusic.model.Punto;
 import com.tecnologiasmoviles.iua.fitmusic.model.Song;
 import com.tecnologiasmoviles.iua.fitmusic.model.Tramo;
 import com.tecnologiasmoviles.iua.fitmusic.model.exception.RaceModelException;
-import com.tecnologiasmoviles.iua.fitmusic.utils.DateUtils;
+import com.tecnologiasmoviles.iua.fitmusic.utils.EncodeListPointsAsyncTask;
 import com.tecnologiasmoviles.iua.fitmusic.utils.FirebaseRefs;
 import com.tecnologiasmoviles.iua.fitmusic.utils.LocationService;
 import com.tecnologiasmoviles.iua.fitmusic.utils.MediaPlayerManager;
@@ -328,6 +333,41 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
                 public void onAnimationStart(Animator animation) {
                     flFinishRace.setVisibility(View.GONE);
                     bsMusic.setVisibility(View.GONE);
+
+                    long currentRaceTime = new Date().getTime();
+
+                    long newDistance = SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY);
+
+                    long rythmn = SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY);
+
+                    long lastUpdatedRythmnTime = SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_TIME_KEY);
+                    long deltaTime = currentRaceTime - lastUpdatedRythmnTime;
+
+                    long lastUpdatedRythmnDistance = SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_DISTANCE_KEY);
+                    float distanceInKms = ((newDistance - lastUpdatedRythmnDistance) / 1000f);
+                    distanceInKms = Math.round(distanceInKms * 100f) / 100f;
+
+                    long currentRythmn = (int) (deltaTime / distanceInKms);
+
+                    long newRythmn = (int) ((rythmn + currentRythmn) / 2);
+
+                    SharedPrefsManager.getInstance(getActivity()).saveLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY, newRythmn);
+                    SharedPrefsManager.getInstance(getActivity()).saveLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_TIME_KEY, currentRaceTime);
+                    SharedPrefsManager.getInstance(getActivity()).saveLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_DISTANCE_KEY, newDistance);
+
+                    Tramo tramo = SharedPrefsManager.getInstance(getActivity()).readSectionObject(SharedPrefsKeys.RACE_ACTUAL_SECTION_KEY);
+                    List<Punto> listPoints = SharedPrefsManager.getInstance(getActivity()).readListPoints(SharedPrefsKeys.RACE_ACTUAL_SECTION_POINTS_KEY);
+
+                    tramo.setDistanciaTramo(newDistance);
+                    tramo.setRitmoTramo(newRythmn);
+                    tramo.setPuntosTramo(listPoints);
+
+                    new EncodeListPointsAsyncTask(getActivity()).execute(listPoints);
+
+                    List<Tramo> tramos = SharedPrefsManager.getInstance(getActivity()).readListSections(SharedPrefsKeys.RACE_SECTIONS_KEY);
+                    tramos.add(tramo);
+
+                    SharedPrefsManager.getInstance(getActivity()).saveListSections(SharedPrefsKeys.RACE_SECTIONS_KEY, tramos);
                 }
 
                 @Override
@@ -430,9 +470,6 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
 
         carrera.setIdCarrera(UUID.randomUUID());
 
-        Date raceDate = new Date(SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.INITIAL_RACE_TIME_KEY));
-        carrera.setFechaCarrera(raceDate);
-
         carrera.setDescripcion(SharedPrefsManager.getInstance(getActivity()).readString(SharedPrefsKeys.RACE_DESCRIPTION_KEY));
         carrera.setDistancia(SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY));
 
@@ -440,30 +477,49 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         carrera.setDuracion(TimeUtils.parseDurationFromStringToMs(raceDuration));
         carrera.setRitmo(SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY));
 
+        Date raceDate = new Date(SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.INITIAL_RACE_TIME_KEY));
+        carrera.setFechaCarrera(raceDate);
+
         List<Tramo> tramos = SharedPrefsManager.getInstance(getActivity()).readListSections(SharedPrefsKeys.RACE_SECTIONS_KEY);
-        carrera.setTramos(tramos);
-
-        List<Punto> puntos = SharedPrefsManager.getInstance(getActivity()).readListPoints(SharedPrefsKeys.RACE_LOCATION_POINTS_KEY);
+        // Last Race Section
+        List<Punto> puntosUltimoTramo = tramos.get(tramos.size()-1).getPuntosTramo();
         // Last Race Point
-        puntos.get(puntos.size()-1).setIsLastRacePoint(true);
-        carrera.setPuntos(puntos);
+        puntosUltimoTramo.get(puntosUltimoTramo.size()-1).setIsLastRacePoint(true);
 
-        Tramo tramoMasRapido = tramos.get(0);
-        for (int i = 1; i < tramos.size(); i++) {
-            if (tramos.get(i).getRitmoTramo() < tramoMasRapido.getRitmoTramo()) {
-                tramoMasRapido = tramos.get(i);
+        List<String> listEncodedPolylines = SharedPrefsManager.getInstance(getActivity()).readListEncodedPolylines(SharedPrefsKeys.ENCODED_POLYLINES_LIST_KEY);
+
+        int indiceTramoMasRapido = 0;
+        long ritmoTramoMasRapido = tramos.get(indiceTramoMasRapido).getRitmoTramo();
+
+        for (int i = 0; i < tramos.size(); i++) {
+            if (i > 0 && tramos.get(i).getRitmoTramo() < ritmoTramoMasRapido) {
+                ritmoTramoMasRapido = tramos.get(i).getRitmoTramo();
+                indiceTramoMasRapido = i;
             }
-            if (i % 2 == 0) {
-                int indexOfPointThatWouldDisplayDistanceInfo = carrera.getPointIndexByUUID(tramos.get(i).getIdPuntoFin());
-                carrera.getPuntos().get(indexOfPointThatWouldDisplayDistanceInfo).setShouldDisplayDistance(true);
-            }
+            tramos.get(i).setSectionPolyline(listEncodedPolylines.get(i));
         }
-        carrera.setTramoMasRapido(tramoMasRapido);
+
+        tramos.get(indiceTramoMasRapido).setFastestSection(true);
+        carrera.setTramos(tramos);
 
         if (getActivity() != null) {
             try {
                 File racesJSONFile = new File(getActivity().getFilesDir(), "races_data.json");
                 RacesJSONParser.saveRaceData(getActivity(), racesJSONFile, carrera);
+
+                racesJSONFile = new File(getActivity().getFilesDir(), "races_data.json");
+
+                StorageReference storageRef = FirebaseStorage.getInstance().getReference();
+                StorageReference riversRef = storageRef.child("races_data_" + new Date().getTime() + ".json");
+
+                UploadTask uploadTask = riversRef.putFile(Uri.fromFile(racesJSONFile));
+
+                // Register observers to listen for when the download is done or if it fails
+                uploadTask.addOnFailureListener(exception -> {
+                    Toast.makeText(getActivity(), exception.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                }).addOnSuccessListener(taskSnapshot -> {
+                    Toast.makeText(getActivity(), "OK", Toast.LENGTH_LONG).show();
+                });
             } catch (IOException e) {
                 e.printStackTrace();
             }

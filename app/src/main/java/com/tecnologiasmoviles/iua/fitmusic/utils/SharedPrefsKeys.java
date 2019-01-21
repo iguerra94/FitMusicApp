@@ -6,7 +6,6 @@ public class SharedPrefsKeys {
     public static final String IS_RUNNING_KEY = "is_running";
     public static final String RACE_LOCATION_POINTS_KEY = "race_location_points";
     public static final String RACE_SECTIONS_KEY = "race_sections";
-    public static final String RACE_ACTUAL_SECTION_INITIAL_POINT_KEY = "race_actual_section_initial_point";
     public static final String RACE_DURATION_KEY = "race_duration";
     public static final String RACE_CURRENT_DISTANCE_KEY = "race_current_distance";
     public static final String RACE_CURRENT_RYTHMN_KEY = "race_current_rythmn";
@@ -22,4 +21,8 @@ public class SharedPrefsKeys {
     public static final String RACE_LAST_UPDATED_RYTHMN_DISTANCE_KEY = "race_last_updated_rythmn_distance";
     public static final String RACE_LAST_UPDATED_RYTHMN_TIME_KEY = "race_last_updated_rythmn_time";
     public static final String RACE_SHOULD_MEASURE_RYTHMN_KEY = "race_should_measure_rythmn";
+    public static final String RACE_ACTUAL_SECTION_POINTS_KEY = "race_actual_section_points";
+    public static final String RACE_ACTUAL_SECTION_KEY = "race_actual_section";
+    public static final String ENCODED_POLYLINE_KEY = "encoded_polyline";
+    public static final String ENCODED_POLYLINES_LIST_KEY = "encoded_polylines_list";
 }

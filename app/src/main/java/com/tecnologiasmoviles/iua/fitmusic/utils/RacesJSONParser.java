@@ -49,21 +49,14 @@ public class RacesJSONParser {
 
     private static Tramo getRaceSectionData(JsonReader reader) throws IOException {
         UUID id_tramo = null;
-        UUID id_punto_inicio = null;
-        UUID id_punto_fin = null;
         long distancia_tramo = 0;
         long ritmo_tramo = 0;
+        List<Punto> puntos_tramo = null;
 
         reader.beginObject();
         while (reader.hasNext()) {
             if (reader.nextName().equals("id_tramo")) {
                 id_tramo = UUID.fromString(reader.nextString());
-            }
-            if (reader.nextName().equals("id_punto_inicio")) {
-                id_punto_inicio = UUID.fromString(reader.nextString());
-            }
-            if (reader.nextName().equals("id_punto_fin")) {
-                id_punto_fin = UUID.fromString(reader.nextString());
             }
             if (reader.nextName().equals("distancia_tramo")) {
                 distancia_tramo = reader.nextLong();
@@ -71,13 +64,16 @@ public class RacesJSONParser {
             if (reader.nextName().equals("ritmo_tramo")) {
                 ritmo_tramo = reader.nextLong();
             }
+            if (reader.nextName().equals("puntos_tramo")) {
+                puntos_tramo = getPointsDataArray(reader);
+            }
             else {
                 reader.skipValue();
             }
         }
         reader.endObject();
 
-        return new Tramo(id_tramo, id_punto_inicio, id_punto_fin, distancia_tramo, ritmo_tramo);
+        return new Tramo(id_tramo, distancia_tramo, ritmo_tramo, puntos_tramo);
     }
 
     private static List<Punto> getPointsDataArray(JsonReader reader) throws IOException{
@@ -98,7 +94,6 @@ public class RacesJSONParser {
         double lon = 0;
         boolean isStartingRacePoint = false;
         boolean isLastRacePoint = false;
-        boolean shouldDisplayDistance = false;
 
         reader.beginObject();
         while (reader.hasNext()) {
@@ -117,16 +112,13 @@ public class RacesJSONParser {
             if (reader.nextName().equals("is_last_race_point")) {
                 isLastRacePoint = reader.nextBoolean();
             }
-            if (reader.nextName().equals("should_display_distance")) {
-                shouldDisplayDistance = reader.nextBoolean();
-            }
             else {
                 reader.skipValue();
             }
         }
         reader.endObject();
 
-        return new Punto(id_punto, lat, lon, isStartingRacePoint, isLastRacePoint, shouldDisplayDistance);
+        return new Punto(id_punto, lat, lon, isStartingRacePoint, isLastRacePoint);
     }
 
     private static List<Carrera> getRacesDataArray(JsonReader reader) throws IOException{
@@ -148,9 +140,7 @@ public class RacesJSONParser {
         long duracion = 0;
         long ritmo = 0;
         Date fechaCarrera = null;
-        Tramo tramoMasRapido = null;
         List<Tramo> tramos = null;
-        List<Punto> puntos = null;
 
         reader.beginObject();
         while (reader.hasNext()) {
@@ -178,14 +168,8 @@ public class RacesJSONParser {
                     e.printStackTrace();
                 }
             }
-            if (reader.nextName().equals("tramo_mas_rapido")) {
-                tramoMasRapido = getRaceSectionData(reader);
-            }
             if (reader.nextName().equals("tramos")) {
                 tramos = getRaceSectionsDataArray(reader);
-            }
-            if (reader.nextName().equals("puntos")) {
-                puntos = getPointsDataArray(reader);
             }
             else {
                 reader.skipValue();
@@ -193,7 +177,7 @@ public class RacesJSONParser {
         }
         reader.endObject();
 
-        return new Carrera(id_carrera, descripcion, distancia, duracion, ritmo, fechaCarrera, tramoMasRapido, tramos, puntos);
+        return new Carrera(id_carrera, descripcion, distancia, duracion, ritmo, fechaCarrera, tramos);
     }
 
     public static void saveRaceData(Context context, File file, Carrera carrera) throws IOException{
@@ -211,8 +195,6 @@ public class RacesJSONParser {
             raceObject.put("ritmo", carrera.getRitmo());
             raceObject.put("fecha_carrera", formatter.format(carrera.getFechaCarrera()));
 
-            raceObject.put("tramo_mas_rapido", Tramo.toJSONObject(carrera.getTramoMasRapido()));
-
             JSONArray sectionsArray = new JSONArray();
 
             for (Tramo t: carrera.getTramos()) {
@@ -220,14 +202,6 @@ public class RacesJSONParser {
             }
 
             raceObject.put("tramos", sectionsArray);
-
-            JSONArray pointsArray = new JSONArray();
-
-            for (Punto p: carrera.getPuntos()) {
-                pointsArray.put(Punto.toJSONObject(p));
-            }
-
-            raceObject.put("puntos", pointsArray);
 
             List<Carrera> racesList = getRacesJSONStream(new FileInputStream(file));
 

@@ -12,7 +12,6 @@ public class Punto implements Serializable {
     private double lon;
     private boolean isStartingRacePoint;
     private boolean isLastRacePoint;
-    private boolean shouldDisplayDistance;
 
     public Punto() {}
 
@@ -22,24 +21,21 @@ public class Punto implements Serializable {
         this.lon = lon;
         this.isStartingRacePoint = false;
         this.isLastRacePoint = false;
-        this.shouldDisplayDistance = false;
     }
 
-    public Punto(UUID id_punto, double lat, double lon, boolean isStartingRacePoint, boolean isLastRacePoint, boolean shouldDisplayDistance) {
+    public Punto(UUID id_punto, double lat, double lon, boolean isStartingRacePoint, boolean isLastRacePoint) {
         this.id_punto = id_punto;
         this.lat = lat;
         this.lon = lon;
         this.isStartingRacePoint = isStartingRacePoint;
         this.isLastRacePoint = isLastRacePoint;
-        this.shouldDisplayDistance = shouldDisplayDistance;
     }
 
-    public Punto(double lat, double lon, boolean isStartingRacePoint, boolean isLastRacePoint, boolean shouldDisplayDistance) {
+    public Punto(double lat, double lon, boolean isStartingRacePoint, boolean isLastRacePoint) {
         this.lat = lat;
         this.lon = lon;
         this.isStartingRacePoint = isStartingRacePoint;
         this.isLastRacePoint = isLastRacePoint;
-        this.shouldDisplayDistance = shouldDisplayDistance;
     }
 
     public UUID getIdPunto() {
@@ -82,22 +78,13 @@ public class Punto implements Serializable {
         this.isLastRacePoint = isLastRacePoint;
     }
 
-    public boolean getShouldDisplayDistance() {
-        return shouldDisplayDistance;
-    }
-
-    public void setShouldDisplayDistance(boolean shouldDisplayDistance) {
-        this.shouldDisplayDistance = shouldDisplayDistance;
-    }
-
     @Override
     public String toString() {
         return "(id_punto: " + id_punto +
                 ", lat: " + lat +
                 ", lon: " + lon +
                 ", is_starting_race_point: " + isStartingRacePoint +
-                ", is_last_race_point: " + isLastRacePoint +
-                ", should_display_distance: " + shouldDisplayDistance + ")";
+                ", is_last_race_point: " + isLastRacePoint + ")";
     }
 
     public static JSONObject toJSONObject(Punto punto) throws JSONException {
@@ -108,7 +95,6 @@ public class Punto implements Serializable {
         pointObject.put("lon", punto.getLon());
         pointObject.put("is_starting_race_point", punto.getIsStartingRacePoint());
         pointObject.put("is_last_race_point", punto.getIsLastRacePoint());
-        pointObject.put("should_display_distance", punto.getShouldDisplayDistance());
 
         return pointObject;
     }

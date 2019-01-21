@@ -11,9 +11,21 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.MapsInitializer;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.maps.android.PolyUtil;
 import com.tecnologiasmoviles.iua.fitmusic.R;
 import com.tecnologiasmoviles.iua.fitmusic.model.Carrera;
+import com.tecnologiasmoviles.iua.fitmusic.model.Punto;
+import com.tecnologiasmoviles.iua.fitmusic.model.Tramo;
+import com.tecnologiasmoviles.iua.fitmusic.utils.MapsUtils;
 import com.tecnologiasmoviles.iua.fitmusic.utils.RacesJSONParser;
 import com.tecnologiasmoviles.iua.fitmusic.utils.TimeUtils;
 
@@ -22,20 +34,18 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Objects;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
-public class LastRaceFragment extends Fragment
-//        implements OnMapReadyCallback
-{
+public class LastRaceFragment extends Fragment implements OnMapReadyCallback {
 
     private static final String LOG_TAG = LastRaceFragment.class.getSimpleName();
 
-    //    private GoogleMap mMap;
-//    private MapView mMapView;
+    private MapView mMapView;
     private static final int DEFAULT_ZOOM = 16;
 
     private ImageView mBSArrowDown;
@@ -49,10 +59,12 @@ public class LastRaceFragment extends Fragment
     private TextView raceDurationTextViewLastRace;
     private TextView raceRythmnTextViewLastRace;
 
+    private Carrera lastRaceData;
+
     public LastRaceFragment() {}
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
         // Inflate the layout for this fragment
@@ -68,25 +80,25 @@ public class LastRaceFragment extends Fragment
         raceRythmnTextViewLastRace = view.findViewById(R.id.raceRythmnTextViewBS);
 
         try {
-            File file = new File(getActivity().getFilesDir(), "races_data.json");
+            File file = new File(Objects.requireNonNull(getActivity()).getFilesDir(), "races_data.json");
             FileInputStream stream = new FileInputStream(file);
 
             List<Carrera> carreras = RacesJSONParser.getRacesJSONStream(stream);
 
-//            mMapView = view.findViewById(R.id.map);
+            mMapView = view.findViewById(R.id.map);
             setMap(view, savedInstanceState);
 
             if (carreras.size() > 0) {
                 linearLayoutNoRaces.setVisibility(View.GONE);
-//                mMapView.setVisibility(View.VISIBLE);
+                mMapView.setVisibility(View.VISIBLE);
                 bsRaceInfoLastRace.setVisibility(View.VISIBLE);
 
-                Carrera ultimaCarrera = carreras.get(carreras.size()-1);
+                lastRaceData = carreras.get(carreras.size()-1);
 
-                setRaceFields(ultimaCarrera);
+                setRaceFields(lastRaceData);
             } else {
                 linearLayoutNoRaces.setVisibility(View.VISIBLE);
-//                mMapView.setVisibility(View.GONE);
+                mMapView.setVisibility(View.GONE);
                 bsRaceInfoLastRace.setVisibility(View.GONE);
 
                 Log.d(LOG_TAG, "ARRAY VACIO");
@@ -101,9 +113,9 @@ public class LastRaceFragment extends Fragment
 
     private void setMap(View view, Bundle savedInstanceState) {
         try {
-//            MapsInitializer.initialize( getActivity() );
-//            mMapView.onCreate(savedInstanceState);
-//            mMapView.getMapAsync(this);
+            MapsInitializer.initialize(Objects.requireNonNull(getActivity()));
+            mMapView.onCreate(savedInstanceState);
+            mMapView.getMapAsync(this);
 
             mBSArrowDown = view.findViewById(R.id.bs_arrow_down);
             mBSArrowUp = view.findViewById(R.id.bs_arrow_up);
@@ -161,33 +173,33 @@ public class LastRaceFragment extends Fragment
     @Override
     public void onPause() {
         super.onPause();
-//        if (mMapView != null) {
-//            mMapView.onPause();
-//        }
+        if (mMapView != null) {
+            mMapView.onPause();
+        }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        if (mMapView != null) {
-//            mMapView.onDestroy();
-//        }
+        if (mMapView != null) {
+            mMapView.onDestroy();
+        }
     }
 
     @Override
     public void onLowMemory() {
         super.onLowMemory();
-//        if (mMapView != null) {
-//            mMapView.onLowMemory();
-//        }
+        if (mMapView != null) {
+            mMapView.onLowMemory();
+        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
-//        if (mMapView != null) {
-//            mMapView.onResume();
-//        }
+        if (mMapView != null) {
+            mMapView.onResume();
+        }
     }
     @Override
     public void onDestroyView() {
@@ -198,21 +210,56 @@ public class LastRaceFragment extends Fragment
      * Manipulates the map when it's available.
      * This callback is triggered when the map is ready to be used.
      */
-//    @Override
-//    public void onMapReady(GoogleMap googleMap) {
-//        mMap = googleMap;
-//        // Set LatLng coords of CRUC-IUA
-//        LatLng iuaLatLng = new LatLng(-31.433575, -64.275736);
-//
-//        // Add marker on that location
-//        mMap.addMarker(new MarkerOptions()
-//                .title("CRUC-IUA")
-//                .snippet("Instituto Universitario Aeronautico.")
-//                .position(iuaLatLng));
-//
-//        // Move camera to point to that location
-//        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(iuaLatLng,
-//                DEFAULT_ZOOM));
-//    }
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        if (lastRaceData != null) {
+            List<Tramo> raceSections = lastRaceData.getTramos();
+
+            for (int i = 0; i < raceSections.size(); i++) {
+                List<Punto> sectionPoints = raceSections.get(i).getPuntosTramo();
+
+                // START MARKER
+                if (i == 0) {
+                    Punto startRacePoint = sectionPoints.get(0);
+                    MapsUtils.addStartRacePointMarker(getActivity(), startRacePoint, googleMap);
+                }
+
+                // FINISH MARKER
+                if (i == raceSections.size()-1) {
+                    Punto lastRacePoint = sectionPoints.get(sectionPoints.size()-1);
+                    MapsUtils.addLastRacePointMarker(getActivity(), lastRacePoint, googleMap);
+                }
+
+                // DISPLAY DISTANCE IN AN INFO WINDOW
+                if (i % 2 != 0) {
+                    Punto lastSectionPoint = sectionPoints.get(i);
+                    long sectionDistance = raceSections.get(i).getDistanciaTramo();
+                    MapsUtils.addDistanceIcon(getActivity(), lastSectionPoint, sectionDistance, googleMap);
+                }
+
+                // DECODE SECTION POLYLINE
+                List<LatLng> decodedPath = PolyUtil.decode(raceSections.get(i).getSectionPolyline());
+
+                // DRAW SECTION POLYLINE
+                if (raceSections.get(i).getIsFastestSection()) {
+                    Polyline fastestSectionPolyline = googleMap.addPolyline(new PolylineOptions().addAll(decodedPath));
+                    fastestSectionPolyline.setTag("fastestSection");
+                    MapsUtils.stylePolyline(fastestSectionPolyline);
+                } else {
+                    Polyline sectionPolyline = googleMap.addPolyline(new PolylineOptions().addAll(decodedPath));
+                    sectionPolyline.setTag("section");
+                    MapsUtils.stylePolyline(sectionPolyline);
+                }
+
+            }
+
+            int sectionIndex = raceSections.size()/2;
+            Punto midPoint = raceSections.get(sectionIndex).getPuntosTramo().get(0);
+
+            // Move camera to point to that location
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(midPoint.getLat(), midPoint.getLon()), DEFAULT_ZOOM));
+            googleMap.getUiSettings().setScrollGesturesEnabled(false);
+        }
+    }
 
 }

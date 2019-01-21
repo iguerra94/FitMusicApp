@@ -6,5 +6,5 @@
   <color name="colorWhite">#ffffff</color>
   <color name="colorWhiteTransparent">#80ffffff</color>
   <color name="btn_rounded_dark_color">#212121</color>
-    <color name="colorMaterialGrey900">#212121</color>
+  <color name="colorMaterialGrey900">#212121</color>
 </resources>

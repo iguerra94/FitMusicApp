@@ -17,12 +17,12 @@
         app:titleTextColor="@color/colorWhite"
         />
 
-    <!--<com.google.android.gms.maps.MapView-->
-    <!--android:id="@+id/race_detail_map"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent"-->
-    <!--android:layout_marginTop="?attr/actionBarSize"-->
-    <!--/>-->
+    <com.google.android.gms.maps.MapView
+        android:id="@+id/race_detail_map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="?attr/actionBarSize"
+        />
 
     <include
         android:id="@+id/bs_race_info"
