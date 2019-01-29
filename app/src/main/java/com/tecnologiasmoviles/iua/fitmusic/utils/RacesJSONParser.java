@@ -51,18 +51,31 @@ public class RacesJSONParser {
         UUID id_tramo = null;
         long distancia_tramo = 0;
         long ritmo_tramo = 0;
+        boolean is_fastest_section = false;
+        String section_polyline = "";
         List<Punto> puntos_tramo = null;
 
         reader.beginObject();
         while (reader.hasNext()) {
             if (reader.nextName().equals("id_tramo")) {
                 id_tramo = UUID.fromString(reader.nextString());
+                Log.d(LOG_TAG, "id_tramo: " + id_tramo);
             }
             if (reader.nextName().equals("distancia_tramo")) {
                 distancia_tramo = reader.nextLong();
+                Log.d(LOG_TAG, "distancia_tramo: " + distancia_tramo);
             }
             if (reader.nextName().equals("ritmo_tramo")) {
                 ritmo_tramo = reader.nextLong();
+                Log.d(LOG_TAG, "ritmo_tramo: " + ritmo_tramo);
+            }
+            if (reader.nextName().equals("is_fastest_section")) {
+                is_fastest_section = reader.nextBoolean();
+                Log.d(LOG_TAG, "is_fastest_section: " + is_fastest_section);
+            }
+            if (reader.nextName().equals("section_polyline")) {
+                section_polyline = reader.nextString();
+                Log.d(LOG_TAG, "section_polyline: " + section_polyline);
             }
             if (reader.nextName().equals("puntos_tramo")) {
                 puntos_tramo = getPointsDataArray(reader);
@@ -73,7 +86,7 @@ public class RacesJSONParser {
         }
         reader.endObject();
 
-        return new Tramo(id_tramo, distancia_tramo, ritmo_tramo, puntos_tramo);
+        return new Tramo(id_tramo, distancia_tramo, ritmo_tramo, is_fastest_section, section_polyline, puntos_tramo);
     }
 
     private static List<Punto> getPointsDataArray(JsonReader reader) throws IOException{
@@ -92,8 +105,8 @@ public class RacesJSONParser {
         UUID id_punto = null;
         double lat = 0;
         double lon = 0;
-        boolean isStartingRacePoint = false;
-        boolean isLastRacePoint = false;
+        boolean is_starting_race_point = false;
+        boolean is_last_race_point = false;
 
         reader.beginObject();
         while (reader.hasNext()) {
@@ -107,10 +120,10 @@ public class RacesJSONParser {
                 lon = reader.nextDouble();
             }
             if (reader.nextName().equals("is_starting_race_point")) {
-                isStartingRacePoint = reader.nextBoolean();
+                is_starting_race_point = reader.nextBoolean();
             }
             if (reader.nextName().equals("is_last_race_point")) {
-                isLastRacePoint = reader.nextBoolean();
+                is_last_race_point = reader.nextBoolean();
             }
             else {
                 reader.skipValue();
@@ -118,7 +131,7 @@ public class RacesJSONParser {
         }
         reader.endObject();
 
-        return new Punto(id_punto, lat, lon, isStartingRacePoint, isLastRacePoint);
+        return new Punto(id_punto, lat, lon, is_starting_race_point, is_last_race_point);
     }
 
     private static List<Carrera> getRacesDataArray(JsonReader reader) throws IOException{
@@ -139,7 +152,7 @@ public class RacesJSONParser {
         long distancia = 0;
         long duracion = 0;
         long ritmo = 0;
-        Date fechaCarrera = null;
+        Date fecha_carrera = null;
         List<Tramo> tramos = null;
 
         reader.beginObject();
@@ -163,7 +176,7 @@ public class RacesJSONParser {
                 SimpleDateFormat formatter1 = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
                 try {
-                    fechaCarrera = formatter1.parse(reader.nextString());
+                    fecha_carrera = formatter1.parse(reader.nextString());
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
@@ -177,7 +190,7 @@ public class RacesJSONParser {
         }
         reader.endObject();
 
-        return new Carrera(id_carrera, descripcion, distancia, duracion, ritmo, fechaCarrera, tramos);
+        return new Carrera(id_carrera, descripcion, distancia, duracion, ritmo, fecha_carrera, tramos);
     }
 
     public static void saveRaceData(Context context, File file, Carrera carrera) throws IOException{

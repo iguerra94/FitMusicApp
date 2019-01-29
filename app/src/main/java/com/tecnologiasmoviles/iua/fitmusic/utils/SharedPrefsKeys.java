@@ -24,5 +24,8 @@ public class SharedPrefsKeys {
     public static final String RACE_ACTUAL_SECTION_POINTS_KEY = "race_actual_section_points";
     public static final String RACE_ACTUAL_SECTION_KEY = "race_actual_section";
     public static final String ENCODED_POLYLINE_KEY = "encoded_polyline";
-    public static final String ENCODED_POLYLINES_LIST_KEY = "encoded_polylines_list";
+    public static final String RACE_CURRENT_FASTEST_SECTION_INDEX_KEY = "race_current_fastest_section_index";
+    public static final String RACE_CURRENT_SECTION_INDEX_KEY = "race_current_section_index";
+    public static final String RACE_CURRENT_FASTEST_SECTION_RYTHMN_KEY = "race_current_fastest_section_rythmn";
+    public static final String RACE_GETTING_LAST_SECTION_POLYLINE_KEY = "race_getting_last_section_polyline";
 }

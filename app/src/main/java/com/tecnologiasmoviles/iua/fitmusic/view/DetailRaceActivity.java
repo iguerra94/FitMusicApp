@@ -170,13 +170,13 @@ public class DetailRaceActivity extends AppCompatActivity implements OnMapReadyC
             // START MARKER
             if (i == 0) {
                 Punto startRacePoint = sectionPoints.get(0);
-                MapsUtils.addStartRacePointMarker(this, startRacePoint, googleMap);
+                MapsUtils.addStartRacePointMarker(this, startRacePoint, "Start", googleMap);
             }
 
             // FINISH MARKER
             if (i == raceSections.size()-1) {
                 Punto lastRacePoint = sectionPoints.get(sectionPoints.size()-1);
-                MapsUtils.addLastRacePointMarker(this, lastRacePoint, googleMap);
+                MapsUtils.addLastRacePointMarker(this, lastRacePoint, "Finish", googleMap);
             }
 
             // DISPLAY DISTANCE IN AN INFO WINDOW
@@ -184,6 +184,12 @@ public class DetailRaceActivity extends AppCompatActivity implements OnMapReadyC
                 Punto lastSectionPoint = sectionPoints.get(i);
                 long sectionDistance = raceSections.get(i).getDistanciaTramo();
                 MapsUtils.addDistanceIcon(this, lastSectionPoint, sectionDistance, googleMap);
+            }
+
+            // LAST SECTION POINT MARKER
+            if (i > 0 && i < raceSections.size()-1) {
+//                Punto lastSectionPoint = sectionPoints.get(i);
+//                MapsUtils.addLastSectionPointMarker(this, lastSectionPoint, googleMap);
             }
 
             // DECODE SECTION POLYLINE

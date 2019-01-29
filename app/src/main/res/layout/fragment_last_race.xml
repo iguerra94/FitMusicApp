@@ -12,7 +12,8 @@
         android:layout_height="match_parent"
         android:layout_centerInParent="true"
         android:gravity="center"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        >
 
         <ImageView
             android:layout_width="40dp"
@@ -38,11 +39,78 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="?attr/actionBarSize"
-        android:visibility="gone" />
+        android:visibility="gone"
+        />
+
+    <LinearLayout
+        android:id="@+id/lastRaceMapToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="?attr/actionBarSize"
+        android:background="#aa000000"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:paddingStart="@dimen/activity_vertical_margin"
+        android:paddingEnd="@dimen/activity_vertical_margin"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="start"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/imageView4"
+                android:layout_width="40dp"
+                android:layout_centerVertical="true"
+                android:layout_height="12dp"
+                android:background="@drawable/view_rounded_fastest_section"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="8dp"
+                android:layout_toRightOf="@id/imageView4"
+                android:text="tramo mas rapido"
+                android:gravity="center"
+                android:textColor="@color/colorWhite" />
+
+        </RelativeLayout>
+
+        <ImageButton
+            android:id="@+id/btnInitialLocation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:padding="10dp"
+            app:srcCompat="@drawable/ic_gps_fixed_indicator"
+            />
+
+
+
+    </LinearLayout>
+
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/loading_race_data_in_map_animation"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_centerHorizontal="true"
+        android:layout_gravity="center"
+        app:lottie_autoPlay="true"
+        app:lottie_fileName="loading.json"
+        app:lottie_loop="true"
+        android:visibility="gone"
+        />
 
     <include
         android:id="@+id/bs_race_info_last_race"
         layout="@layout/bottom_sheet_race_detail"
-        android:visibility="gone" />
+        android:visibility="gone"
+        />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

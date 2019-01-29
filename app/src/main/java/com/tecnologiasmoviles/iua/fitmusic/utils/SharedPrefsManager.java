@@ -140,6 +140,11 @@ public class SharedPrefsManager {
         SharedPrefsManager.getInstance(context).saveBoolean(SharedPrefsKeys.IS_RUNNING_KEY, false);
         SharedPrefsManager.getInstance(context).saveBoolean(SharedPrefsKeys.RACE_GETTING_LAST_POINT_KEY, false);
         SharedPrefsManager.getInstance(context).saveBoolean(SharedPrefsKeys.RACE_SHOULD_MEASURE_RYTHMN_KEY, false);
+        SharedPrefsManager.getInstance(context).saveBoolean(SharedPrefsKeys.RACE_GETTING_LAST_SECTION_POLYLINE_KEY, false);
+        SharedPrefsManager.getInstance(context).saveInt(SharedPrefsKeys.ID_SONG_KEY, -1);
+        SharedPrefsManager.getInstance(context).saveInt(SharedPrefsKeys.RACE_CURRENT_SECTION_INDEX_KEY, 0);
+        SharedPrefsManager.getInstance(context).saveInt(SharedPrefsKeys.RACE_CURRENT_FASTEST_SECTION_INDEX_KEY, 0);
+        SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.RACE_CURRENT_FASTEST_SECTION_RYTHMN_KEY, 0);
         SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.LAST_UPDATE_TIME_MS_KEY, 0);
         SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.INITIAL_RACE_TIME_KEY, 0);
         SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY, 0);
@@ -147,18 +152,16 @@ public class SharedPrefsManager {
         SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY, 0);
         SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_DISTANCE_KEY, 0);
         SharedPrefsManager.getInstance(context).saveLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_TIME_KEY, 0);
-        SharedPrefsManager.getInstance(context).saveInt(SharedPrefsKeys.ID_SONG_KEY, -1);
         SharedPrefsManager.getInstance(context).saveString(SharedPrefsKeys.LAST_UPDATE_TIME_KEY, "");
         SharedPrefsManager.getInstance(context).saveString(SharedPrefsKeys.RACE_DATE_STRING_KEY, "");
         SharedPrefsManager.getInstance(context).saveString(SharedPrefsKeys.RACE_DESCRIPTION_KEY, "");
         SharedPrefsManager.getInstance(context).saveString(SharedPrefsKeys.RACE_CURRENT_FIREBASE_KEY, "");
         SharedPrefsManager.getInstance(context).saveString(SharedPrefsKeys.RACE_DURATION_KEY, "");
+        SharedPrefsManager.getInstance(context).saveString(SharedPrefsKeys.ENCODED_POLYLINE_KEY, "");
         SharedPrefsManager.getInstance(context).saveListPoints(SharedPrefsKeys.RACE_LOCATION_POINTS_KEY, null);
         SharedPrefsManager.getInstance(context).saveSectionObject(SharedPrefsKeys.RACE_ACTUAL_SECTION_KEY, null);
         SharedPrefsManager.getInstance(context).saveListPoints(SharedPrefsKeys.RACE_ACTUAL_SECTION_POINTS_KEY, null);
         SharedPrefsManager.getInstance(context).saveListSections(SharedPrefsKeys.RACE_SECTIONS_KEY, null);
-        SharedPrefsManager.getInstance(context).saveListSections(SharedPrefsKeys.RACE_SECTIONS_KEY, null);
-        SharedPrefsManager.getInstance(context).saveListEncodedPolylines(SharedPrefsKeys.ENCODED_POLYLINES_LIST_KEY, null);
     }
 
 }

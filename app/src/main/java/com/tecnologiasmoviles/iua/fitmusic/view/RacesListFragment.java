@@ -65,16 +65,16 @@ public class RacesListFragment extends Fragment {
 
             List<Carrera> carreras = RacesJSONParser.getRacesJSONStream(stream);
 
-            if (carreras.size() > 0) {
-                linearLayoutNoRaces.setVisibility(View.GONE);
-                listViewRaces.setVisibility(View.VISIBLE);
-                RacesAdapter adapter = new RacesAdapter(getActivity(), carreras);
-                listViewRaces.setAdapter(adapter);
-                Log.d(LOG_TAG, "ARRAY DE CARRERAS CORRECTO");
-            } else {
+//            if (carreras.size() > 0) {
+//                linearLayoutNoRaces.setVisibility(View.GONE);
+//                listViewRaces.setVisibility(View.VISIBLE);
+//                RacesAdapter adapter = new RacesAdapter(getActivity(), carreras);
+//                listViewRaces.setAdapter(adapter);
+//                Log.d(LOG_TAG, "ARRAY DE CARRERAS CORRECTO");
+//            } else {
                 linearLayoutNoRaces.setVisibility(View.VISIBLE);
                 listViewRaces.setVisibility(View.GONE);
-            }
+//            }
         } catch (IOException e) {
             e.printStackTrace();
         }

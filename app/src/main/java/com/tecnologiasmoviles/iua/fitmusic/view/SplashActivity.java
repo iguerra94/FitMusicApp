@@ -69,14 +69,21 @@ public class SplashActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if(!arePermissionsEnabled()){
                 requestMultiplePermissions();
-            } else {
-                boolean appIsOpened = SharedPrefsManager.getInstance(this).readBoolean(SharedPrefsKeys.APP_IS_OPENED_KEY);
-
-                if (appIsOpened) {
-                    Log.d(LOG_TAG, "appIsOpened: " + appIsOpened);
-                    goToMainActivity(this.getCurrentFocus());
-                }
             }
+//            else {
+//                try {
+//                    Thread.sleep(1000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//
+//                boolean appIsOpened = SharedPrefsManager.getInstance(this).readBoolean(SharedPrefsKeys.APP_IS_OPENED_KEY);
+//
+//                if (appIsOpened) {
+//                    Log.d(LOG_TAG, "appIsOpened: " + appIsOpened);
+//                    goToMainActivity(this.getCurrentFocus());
+//                }
+//            }
         }
     }
 
@@ -241,12 +248,18 @@ public class SplashActivity extends AppCompatActivity {
             //all is good, continue flow
             createRegistrationToken();
 
-            boolean appIsOpened = SharedPrefsManager.getInstance(this).readBoolean(SharedPrefsKeys.APP_IS_OPENED_KEY);
-
-            if (appIsOpened) {
-                Log.d(LOG_TAG, "appIsOpened: " + appIsOpened);
-                goToMainActivity(this.getCurrentFocus());
-            }
+//            try {
+//                Thread.sleep(1000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//
+//            boolean appIsOpened = SharedPrefsManager.getInstance(this).readBoolean(SharedPrefsKeys.APP_IS_OPENED_KEY);
+//
+//            if (appIsOpened) {
+//                Log.d(LOG_TAG, "appIsOpened: " + appIsOpened);
+//                goToMainActivity(this.getCurrentFocus());
+//            }
         }
     }
 

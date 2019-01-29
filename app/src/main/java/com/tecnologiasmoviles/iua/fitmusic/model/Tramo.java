@@ -21,6 +21,15 @@ public class Tramo {
 
     public Tramo() {}
 
+    public Tramo(UUID id_tramo, long distancia_tramo, long ritmo_tramo, boolean is_fastest_section, String section_polyline, List<Punto> puntos_tramo) {
+        this.id_tramo = id_tramo;
+        this.distancia_tramo = distancia_tramo;
+        this.ritmo_tramo = ritmo_tramo;
+        this.is_fastest_section = is_fastest_section;
+        this.section_polyline = section_polyline;
+        this.puntos_tramo = puntos_tramo;
+    }
+
     public Tramo(UUID id_tramo, long distancia_tramo, long ritmo_tramo, List<Punto> puntos_tramo) {
         this.id_tramo = id_tramo;
         this.distancia_tramo = distancia_tramo;
@@ -66,7 +75,7 @@ public class Tramo {
         return is_fastest_section;
     }
 
-    public void setFastestSection(boolean is_fastest_section) {
+    public void setIsFastestSection(boolean is_fastest_section) {
         this.is_fastest_section = is_fastest_section;
     }
 

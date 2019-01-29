@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.text.SpannableStringBuilder;
 import android.text.style.StyleSpan;
+import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
@@ -14,6 +15,7 @@ import com.google.android.gms.maps.model.Dot;
 import com.google.android.gms.maps.model.Gap;
 import com.google.android.gms.maps.model.JointType;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PatternItem;
 import com.google.android.gms.maps.model.Polyline;
@@ -21,6 +23,7 @@ import com.google.android.gms.maps.model.RoundCap;
 import com.google.maps.android.ui.IconGenerator;
 import com.tecnologiasmoviles.iua.fitmusic.R;
 import com.tecnologiasmoviles.iua.fitmusic.model.Punto;
+import com.tecnologiasmoviles.iua.fitmusic.view.CustomInfoWindowGoogleMap;
 
 import java.util.Arrays;
 import java.util.List;
@@ -79,13 +82,56 @@ public class MapsUtils {
         return ssb;
     }
 
-    public static void addIcon(IconGenerator iconFactory, CharSequence text, LatLng position, GoogleMap map) {
+    public static void addIcon(IconGenerator iconFactory, CharSequence text, LatLng position, GoogleMap googleMap) {
         MarkerOptions markerOptions = new MarkerOptions().
                 icon(BitmapDescriptorFactory.fromBitmap(iconFactory.makeIcon(text))).
                 position(position).
                 anchor(iconFactory.getAnchorU(), iconFactory.getAnchorV());
 
-        map.addMarker(markerOptions);
+        googleMap.setOnMarkerClickListener(marker -> {
+            if (marker.getTitle() != null) {
+                if (marker.getTitle().equalsIgnoreCase("Start")) {
+                    if (marker.isInfoWindowShown()) {
+                        marker.hideInfoWindow();
+                    } else {
+                        marker.showInfoWindow();
+                    }
+                    return true;
+                }
+                if (marker.getTitle().equalsIgnoreCase("Finish")) {
+                    if (marker.isInfoWindowShown()) {
+                        marker.hideInfoWindow();
+                    } else {
+                        marker.showInfoWindow();
+                    }
+                    return true;
+                }
+            }
+            marker.hideInfoWindow();
+            return true;
+        });
+        googleMap.setOnInfoWindowClickListener(marker -> {
+            if (marker.getTitle() != null) {
+                if (marker.getTitle().equalsIgnoreCase("Start")) {
+                    if (marker.isInfoWindowShown()) {
+                        marker.hideInfoWindow();
+                    } else {
+                        marker.showInfoWindow();
+                    }
+                }
+                if (marker.getTitle().equalsIgnoreCase("Finish")) {
+                    if (marker.isInfoWindowShown()) {
+                        marker.hideInfoWindow();
+                    } else {
+                        marker.showInfoWindow();
+                    }
+                }
+            } else {
+                marker.hideInfoWindow();
+            }
+        });
+
+        googleMap.addMarker(markerOptions);
     }
 
     public static BitmapDescriptor bitmapDescriptorFromVector(Context context, int vectorResId) {
@@ -97,18 +143,51 @@ public class MapsUtils {
         return BitmapDescriptorFactory.fromBitmap(bitmap);
     }
 
-    public static void addStartRacePointMarker(Context context, Punto startRacePoint, GoogleMap googleMap) {
-        googleMap.addMarker(new MarkerOptions()
+    public static void addStartRacePointMarker(Context context, Punto startRacePoint, String text, GoogleMap googleMap) {
+        MarkerOptions markerOptions = new MarkerOptions()
                 .position(new LatLng(startRacePoint.getLat(), startRacePoint.getLon()))
-                .icon(MapsUtils.bitmapDescriptorFromVector(context, R.drawable.ic_map_marker_alt_solid))
-                .title("START"));
+                .icon(MapsUtils.bitmapDescriptorFromVector(context, R.drawable.ic_circle_solid))
+                .anchor(0.5f, 0.5f)
+                .title("Start");
+
+        CustomInfoWindowGoogleMap customInfoWindow = new CustomInfoWindowGoogleMap(context);
+        googleMap.setInfoWindowAdapter(customInfoWindow);
+
+        googleMap.addMarker(markerOptions);
     }
 
-    public static void addLastRacePointMarker(Context context, Punto lastRacePoint, GoogleMap googleMap) {
-        googleMap.addMarker(new MarkerOptions()
+    public static void addLastSectionPointMarker(Context context, Punto lastSectionPoint, Punto firstPointNextSection, GoogleMap googleMap) {
+        if (lastSectionPoint != null) {
+            MarkerOptions markerOptions = new MarkerOptions()
+                    .position(new LatLng(lastSectionPoint.getLat(), lastSectionPoint.getLon()))
+                    .icon(MapsUtils.bitmapDescriptorFromVector(context, R.drawable.ic_dot_circle_solid))
+                    .anchor(0.5f, 0.5f);
+
+            googleMap.addMarker(markerOptions);
+        }
+
+        if (firstPointNextSection != null) {
+            MarkerOptions markerOptions = new MarkerOptions()
+                    .position(new LatLng(firstPointNextSection.getLat(), firstPointNextSection.getLon()))
+                    .icon(MapsUtils.bitmapDescriptorFromVector(context, R.drawable.ic_dot_circle_solid))
+                    .anchor(0.5f, 0.5f);
+
+            googleMap.addMarker(markerOptions);
+       }
+
+    }
+
+    public static void addLastRacePointMarker(Context context, Punto lastRacePoint, String text, GoogleMap googleMap) {
+        MarkerOptions markerOptions = new MarkerOptions()
                 .position(new LatLng(lastRacePoint.getLat(), lastRacePoint.getLon()))
-                .icon(MapsUtils.bitmapDescriptorFromVector(context, R.drawable.ic_flag_checkered_solid))
-                .title("FINISH"));
+                .icon(MapsUtils.bitmapDescriptorFromVector(context, R.drawable.ic_dot_circle_regular))
+                .anchor(0.5f, 0.5f)
+                .title("Finish");
+
+        CustomInfoWindowGoogleMap customInfoWindow = new CustomInfoWindowGoogleMap(context);
+        googleMap.setInfoWindowAdapter(customInfoWindow);
+
+        googleMap.addMarker(markerOptions);
     }
 
     public static void addDistanceIcon(Context context, Punto lastSectionPoint, long sectionDistance, GoogleMap googleMap) {
@@ -116,6 +195,8 @@ public class MapsUtils {
         String distanceString = String.format("%.2f", distanceToKms) +  " km";
 
         IconGenerator iconFactory = new IconGenerator(context);
+//        iconFactory.setRotation(270);
+//        iconFactory.setContentRotation(-270);
         MapsUtils.addIcon(iconFactory, MapsUtils.makeCharSequence(distanceString),
                 new LatLng(lastSectionPoint.getLat(), lastSectionPoint.getLon()),
                 googleMap);
@@ -125,10 +206,28 @@ public class MapsUtils {
         return point.latitude + "," + point.longitude;
     }
 
-    public static String createUrlWaypoints(List<LatLng> points) {
+    public static String createUrlWaypoints(List<LatLng> points, boolean optimize) {
         StringBuilder url = new StringBuilder();
-        for (LatLng point: points) {
-            url.append("|").append(point.latitude).append(",").append(point.longitude);
+
+        if (points.isEmpty()) {
+            return "";
+        }
+
+        if (optimize) {
+            int[] indexes;
+            if (points.size() % 2 == 0) {
+                indexes = new int[]{0,1,(points.size()/2)-1, points.size()/2,points.size()-2,points.size()-1};
+            } else {
+                indexes = new int[]{0,1,points.size()/2,points.size()-2,points.size()-1};
+            }
+            for (int index : indexes) {
+                url.append("|").append(createUrl(points.get(index)));
+            }
+        } else {
+            for (int i = 0; i < points.size()-1; i++) {
+                url.append(createUrl(points.get(i))).append("|");
+            }
+            url.append(createUrl(points.get(points.size()-1)));
         }
         return url.toString();
     }

@@ -1,45 +1,26 @@
 package com.tecnologiasmoviles.iua.fitmusic.view;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 import com.androidnetworking.AndroidNetworking;
-import com.androidnetworking.common.Priority;
-import com.androidnetworking.error.ANError;
-import com.androidnetworking.interfaces.JSONObjectRequestListener;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.maps.android.PolyUtil;
 import com.tecnologiasmoviles.iua.fitmusic.R;
-import com.tecnologiasmoviles.iua.fitmusic.model.Punto;
-import com.tecnologiasmoviles.iua.fitmusic.model.Tramo;
 import com.tecnologiasmoviles.iua.fitmusic.utils.FirebaseRefs;
 import com.tecnologiasmoviles.iua.fitmusic.utils.LocationService;
 import com.tecnologiasmoviles.iua.fitmusic.utils.SharedPrefsKeys;
 import com.tecnologiasmoviles.iua.fitmusic.utils.SharedPrefsManager;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -76,22 +57,22 @@ public class ContainerActivity extends AppCompatActivity implements BottomNaviga
 
         mMainNav.setOnNavigationItemSelectedListener(this);
 
-        SharedPrefsManager.getInstance(this).saveBoolean(SharedPrefsKeys.APP_IS_OPENED_KEY, true);
+//        SharedPrefsManager.getInstance(this).saveBoolean(SharedPrefsKeys.APP_IS_OPENED_KEY, true);
 
         SharedPrefsManager.getInstance(this).getSharedPrefs().registerOnSharedPreferenceChangeListener(this);
 
         AndroidNetworking.initialize(getApplicationContext());
 
-        Punto p1 = new Punto(UUID.randomUUID(), -31.419004,-64.197000);
-        Punto p2 = new Punto(UUID.randomUUID(), -31.418970,-64.195476);
-        Punto p3 = new Punto(UUID.randomUUID(), -31.418782,-64.194099);
-
-        List<Punto> puntos = new ArrayList<>();
-        puntos.add(p1);
-        puntos.add(p2);
-        puntos.add(p3);
-
-        new EncodeListPointsAsyncTask().execute(puntos);
+//        Punto p1 = new Punto(UUID.randomUUID(), -31.419004,-64.197000);
+//        Punto p2 = new Punto(UUID.randomUUID(), -31.418970,-64.195476);
+//        Punto p3 = new Punto(UUID.randomUUID(), -31.418782,-64.194099);
+//
+//        List<Punto> puntos = new ArrayList<>();
+//        puntos.add(p1);
+//        puntos.add(p2);
+//        puntos.add(p3);
+//
+//        new EncodeListPointsAsyncTask().execute(puntos);
 
 //        new TestRaceAsyncTask().execute();
     }
@@ -195,12 +176,12 @@ public class ContainerActivity extends AppCompatActivity implements BottomNaviga
                     }
 
                     locationRequest = LocationService.buildLocationRequest();
-                    locationCallback = LocationService.buildLocationCallback(ContainerActivity.this, refKey, "");
+                    locationCallback = LocationService.buildLocationCallback(ContainerActivity.this, refKey);
 
                     LocationService.getFusedLocationProviderClientInstance(this).requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
                 } else {
                     locationRequest = LocationService.buildLocationRequest();
-                    locationCallback = LocationService.buildLocationCallback(ContainerActivity.this, refKey, "");
+                    locationCallback = LocationService.buildLocationCallback(ContainerActivity.this, refKey);
 
                     LocationService.getFusedLocationProviderClientInstance(this).requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
                 }
@@ -422,78 +403,78 @@ public class ContainerActivity extends AppCompatActivity implements BottomNaviga
 //        }
 //
 //    }
-
-    public String createUrl(LatLng point) {
-        return point.latitude + "," + point.longitude;
-    }
-
-    public String createUrlWaypoints(List<LatLng> points) {
-        StringBuilder url = new StringBuilder();
-        for (LatLng point: points) {
-            url.append("|").append(point.latitude).append(",").append(point.longitude);
-        }
-        return url.toString();
-    }
-
-    private class EncodeListPointsAsyncTask extends AsyncTask<List<Punto>, Void, String> {
-
-        @Override
-        protected void onPreExecute() {
-            SharedPrefsManager.getInstance(ContainerActivity.this).saveString(SharedPrefsKeys.ENCODED_POLYLINE_KEY, "");
-        }
-
-        @Override
-        protected String doInBackground(List<Punto>... puntos) {
-            List<LatLng> latLngList = new ArrayList<>();
-
-            for (Punto p : puntos[0]) {
-                latLngList.add(new LatLng(p.getLat(), p.getLon()));
-            }
-
-            AndroidNetworking.get("https://maps.googleapis.com/maps/api/directions/json?origin={origin}&destination={destination}&waypoints=optimize:true{waypoints}&mode={mode}&key={key}")
-                    .addPathParameter("origin", createUrl(latLngList.get(0)))
-                    .addPathParameter("destination", createUrl(latLngList.get(latLngList.size()-1)))
-                    .addPathParameter("waypoints", createUrlWaypoints(latLngList.subList(1, latLngList.size()-1)))
-                    .addPathParameter("mode", "walking")
-                    .addPathParameter("key", "AIzaSyBe4BWfH1NlOgidZQ8Spbq02GFSLe5BHv0")
-                    .setTag("test")
-                    .setPriority(Priority.HIGH)
-                    .build()
-                    .getAsJSONObject(new JSONObjectRequestListener() {
-                        @Override
-                        public void onResponse(JSONObject response) {
-                            try {
-                                JSONObject routes = response.getJSONArray("routes").getJSONObject(0);
-                                JSONObject overviewPolyline = routes.getJSONObject("overview_polyline");
-
-                                String ENCODED_POLYLINE = overviewPolyline.getString("points");
-
-                                SharedPrefsManager.getInstance(ContainerActivity.this).saveString(SharedPrefsKeys.ENCODED_POLYLINE_KEY, ENCODED_POLYLINE);
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                        @Override
-                        public void onError(ANError anError) {
-                            Log.d(LOG_TAG, "ERROR: " + anError.getErrorBody());
-                        }
-                    });
-
-            String ENCODED_POLYLINE;
-
-            do {
-                ENCODED_POLYLINE = SharedPrefsManager.getInstance(ContainerActivity.this).readString(SharedPrefsKeys.ENCODED_POLYLINE_KEY);
-            } while (ENCODED_POLYLINE.length() == 0);
-
-            return ENCODED_POLYLINE;
-        }
-
-        @Override
-        protected void onPostExecute(String ENCODED_POLYLINE) {
-            Log.d(LOG_TAG, ENCODED_POLYLINE);
-        }
-
-    }
+//
+//    public String createUrl(LatLng point) {
+//        return point.latitude + "," + point.longitude;
+//    }
+//
+//    public String createUrlWaypoints(List<LatLng> points) {
+//        StringBuilder url = new StringBuilder();
+//        for (LatLng point: points) {
+//            url.append("|").append(point.latitude).append(",").append(point.longitude);
+//        }
+//        return url.toString();
+//    }
+//
+//    private class EncodeListPointsAsyncTask extends AsyncTask<List<Punto>, Void, String> {
+//
+//        @Override
+//        protected void onPreExecute() {
+//            SharedPrefsManager.getInstance(ContainerActivity.this).saveString(SharedPrefsKeys.ENCODED_POLYLINE_KEY, "");
+//        }
+//
+//        @Override
+//        protected String doInBackground(List<Punto>... puntos) {
+//            List<LatLng> latLngList = new ArrayList<>();
+//
+//            for (Punto p : puntos[0]) {
+//                latLngList.add(new LatLng(p.getLat(), p.getLon()));
+//            }
+//
+//            AndroidNetworking.get("https://maps.googleapis.com/maps/api/directions/json?origin={origin}&destination={destination}&waypoints=optimize:true{waypoints}&mode={mode}&key={key}")
+//                    .addPathParameter("origin", createUrl(latLngList.get(0)))
+//                    .addPathParameter("destination", createUrl(latLngList.get(latLngList.size()-1)))
+//                    .addPathParameter("waypoints", createUrlWaypoints(latLngList.subList(1, latLngList.size()-1)))
+//                    .addPathParameter("mode", "walking")
+//                    .addPathParameter("key", "AIzaSyBe4BWfH1NlOgidZQ8Spbq02GFSLe5BHv0")
+//                    .setTag("test")
+//                    .setPriority(Priority.HIGH)
+//                    .build()
+//                    .getAsJSONObject(new JSONObjectRequestListener() {
+//                        @Override
+//                        public void onResponse(JSONObject response) {
+//                            try {
+//                                JSONObject routes = response.getJSONArray("routes").getJSONObject(0);
+//                                JSONObject overviewPolyline = routes.getJSONObject("overview_polyline");
+//
+//                                String ENCODED_POLYLINE = overviewPolyline.getString("points");
+//
+//                                SharedPrefsManager.getInstance(ContainerActivity.this).saveString(SharedPrefsKeys.ENCODED_POLYLINE_KEY, ENCODED_POLYLINE);
+//                            } catch (JSONException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//
+//                        @Override
+//                        public void onError(ANError anError) {
+//                            Log.d(LOG_TAG, "ERROR: " + anError.getErrorBody());
+//                        }
+//                    });
+//
+//            String ENCODED_POLYLINE;
+//
+//            do {
+//                ENCODED_POLYLINE = SharedPrefsManager.getInstance(ContainerActivity.this).readString(SharedPrefsKeys.ENCODED_POLYLINE_KEY);
+//            } while (ENCODED_POLYLINE.length() == 0);
+//
+//            return ENCODED_POLYLINE;
+//        }
+//
+//        @Override
+//        protected void onPostExecute(String ENCODED_POLYLINE) {
+//            Log.d(LOG_TAG, ENCODED_POLYLINE);
+//        }
+//
+//    }
 
 }

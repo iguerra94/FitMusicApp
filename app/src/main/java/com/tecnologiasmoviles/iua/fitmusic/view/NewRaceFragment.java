@@ -31,8 +31,6 @@ import com.airbnb.lottie.LottieAnimationView;
 import com.androidnetworking.AndroidNetworking;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.database.DatabaseReference;
@@ -126,6 +124,8 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
 
     private AlertDialog dialogRegisteringRace;
 
+    private AlertDialog dialogRaceNotRegistered;
+
     private LocationCallback locationCallback;
 
     public NewRaceFragment() {
@@ -216,17 +216,6 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
     }
 
     private void startRace() {
-        int x = layoutContent.getRight();
-        int y = layoutContent.getBottom();
-
-        // Reset all race SharedPrefsKeys
-        SharedPrefsManager.initRaceSharedPrefsKeys(getActivity());
-
-        int startRadius = 0;
-        int endRadius = (int) Math.hypot(newRaceFragmentView.getWidth(), newRaceFragmentView.getHeight());
-
-        Log.d(LOG_TAG, "x: " + x + ", y: " + y + ", startRadius: " + startRadius + ", endRadius: " + endRadius);
-
         songList = SongUtils.getMusic(Objects.requireNonNull(getActivity()).getContentResolver());
 
         if (mediaPlayerManager.getMediaPlayer() == null) {
@@ -237,83 +226,10 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         if (songList.size() > 0) {
             updateCurrentSongUI();
         } else {
-            Log.d(LOG_TAG, "HOLA");
             songList = SongUtils.getMusicFromFirebase();
-            Log.d(LOG_TAG, "songList: " + songList);
         }
 
-        Animator anim;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            anim = ViewAnimationUtils.createCircularReveal(layoutContent, x, y, startRadius, endRadius);
-            anim.addListener(new Animator.AnimatorListener() {
-                @Override
-                public void onAnimationStart(Animator animation) {
-                    newRaceDateTV.setText("");
-                    newRaceDescriptionTV.setText("");
-                    SharedPrefsManager.getInstance(getActivity()).saveBoolean(SharedPrefsKeys.IS_RUNNING_KEY, true);
-
-                    Date now = new Date();
-
-                    @SuppressLint("SimpleDateFormat") SimpleDateFormat formatterTime = new SimpleDateFormat("HH:mm");
-                    String dateFormattedTime = formatterTime.format(now) + " hs";
-
-                    SharedPrefsManager.getInstance(getActivity()).saveString(SharedPrefsKeys.LAST_UPDATE_TIME_KEY, dateFormattedTime);
-                    List<Punto> puntos = new ArrayList<>();
-
-                    SharedPrefsManager.getInstance(getActivity()).saveListPoints(SharedPrefsKeys.RACE_LOCATION_POINTS_KEY, puntos);
-
-                    setInitialTime(now.getTime());
-
-                    @SuppressLint("SimpleDateFormat") SimpleDateFormat formatterDateTime = new SimpleDateFormat("dd/MM/yyyy - HH:mm");
-
-                    String dateFormattedDateTime = formatterDateTime.format(now) + " hs";
-                    String raceDescription = raceDescriptionEditText.getText().toString();
-
-                    raceDescriptionEditText.setText("");
-
-                    newRaceDateTV.setText(dateFormattedDateTime);
-                    newRaceDescriptionTV.setText(raceDescription);
-
-                    SharedPrefsManager.getInstance(getActivity()).saveString(SharedPrefsKeys.RACE_DATE_STRING_KEY, dateFormattedDateTime);
-                    SharedPrefsManager.getInstance(getActivity()).saveString(SharedPrefsKeys.RACE_DESCRIPTION_KEY, raceDescription);
-
-                    SharedPrefsManager.getInstance(getActivity()).saveLong(SharedPrefsKeys.INITIAL_RACE_TIME_KEY, now.getTime());
-                    Log.d(LOG_TAG, "fechaCarrera: " + dateFormattedDateTime);
-                }
-
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                }
-
-                @Override
-                public void onAnimationCancel(Animator animation) {
-
-                }
-
-                @Override
-                public void onAnimationRepeat(Animator animation) {
-
-                }
-            });
-
-            animationView.setVisibility(View.GONE);
-            relativeLayoutNewRace.setVisibility(View.GONE);
-            flStartRace.setVisibility(View.GONE);
-
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            anim.start();
-
-            layoutNewRaceData.setVisibility(View.VISIBLE);
-            flFinishRace.setVisibility(View.VISIBLE);
-            bsMusic.setVisibility(View.VISIBLE);
-
-            updateTimerUI();
-        }
+        new StartRaceAsyncTask().execute();
     }
 
     private void finishRace() {
@@ -334,40 +250,74 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
                     flFinishRace.setVisibility(View.GONE);
                     bsMusic.setVisibility(View.GONE);
 
-                    long currentRaceTime = new Date().getTime();
+                    long raceCurrentDistance = SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY);
 
-                    long newDistance = SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY);
+                    if (LocationService.getLocationCallback() != null) {
+                        LocationService.getFusedLocationProviderClientInstance(getActivity()).removeLocationUpdates(LocationService.getLocationCallback());
+                    }
+//                    locationCallback = null;
 
-                    long rythmn = SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY);
+                    if (raceCurrentDistance >= 500) {
+                        long currentRaceTime = new Date().getTime();
 
-                    long lastUpdatedRythmnTime = SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_TIME_KEY);
-                    long deltaTime = currentRaceTime - lastUpdatedRythmnTime;
+                        long rythmn = SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY);
 
-                    long lastUpdatedRythmnDistance = SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_DISTANCE_KEY);
-                    float distanceInKms = ((newDistance - lastUpdatedRythmnDistance) / 1000f);
-                    distanceInKms = Math.round(distanceInKms * 100f) / 100f;
+                        long lastUpdatedRythmnTime = SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_TIME_KEY);
+                        long deltaTime = currentRaceTime - lastUpdatedRythmnTime;
 
-                    long currentRythmn = (int) (deltaTime / distanceInKms);
+                        long lastUpdatedRythmnDistance = SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_DISTANCE_KEY);
+                        float distanceInKms = ((raceCurrentDistance - lastUpdatedRythmnDistance) / 1000f);
+                        distanceInKms = Math.round(distanceInKms * 100f) / 100f;
 
-                    long newRythmn = (int) ((rythmn + currentRythmn) / 2);
+                        long currentRythmn = (int) (deltaTime / distanceInKms);
 
-                    SharedPrefsManager.getInstance(getActivity()).saveLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY, newRythmn);
-                    SharedPrefsManager.getInstance(getActivity()).saveLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_TIME_KEY, currentRaceTime);
-                    SharedPrefsManager.getInstance(getActivity()).saveLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_DISTANCE_KEY, newDistance);
+                        long newRythmn = (int) ((rythmn + currentRythmn) / 2);
 
-                    Tramo tramo = SharedPrefsManager.getInstance(getActivity()).readSectionObject(SharedPrefsKeys.RACE_ACTUAL_SECTION_KEY);
-                    List<Punto> listPoints = SharedPrefsManager.getInstance(getActivity()).readListPoints(SharedPrefsKeys.RACE_ACTUAL_SECTION_POINTS_KEY);
+                        SharedPrefsManager.getInstance(getActivity()).saveLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY, newRythmn);
+                        SharedPrefsManager.getInstance(getActivity()).saveLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_TIME_KEY, currentRaceTime);
+                        SharedPrefsManager.getInstance(getActivity()).saveLong(SharedPrefsKeys.RACE_LAST_UPDATED_RYTHMN_DISTANCE_KEY, raceCurrentDistance);
 
-                    tramo.setDistanciaTramo(newDistance);
-                    tramo.setRitmoTramo(newRythmn);
-                    tramo.setPuntosTramo(listPoints);
+                        Tramo tramo = SharedPrefsManager.getInstance(getActivity()).readSectionObject(SharedPrefsKeys.RACE_ACTUAL_SECTION_KEY);
+                        List<Punto> listPoints = SharedPrefsManager.getInstance(getActivity()).readListPoints(SharedPrefsKeys.RACE_ACTUAL_SECTION_POINTS_KEY);
 
-                    new EncodeListPointsAsyncTask(getActivity()).execute(listPoints);
+                        tramo.setDistanciaTramo(raceCurrentDistance);
+                        tramo.setRitmoTramo(newRythmn);
+                        tramo.setPuntosTramo(listPoints);
 
-                    List<Tramo> tramos = SharedPrefsManager.getInstance(getActivity()).readListSections(SharedPrefsKeys.RACE_SECTIONS_KEY);
-                    tramos.add(tramo);
+                        SharedPrefsManager.getInstance(getActivity()).saveBoolean(SharedPrefsKeys.RACE_GETTING_LAST_SECTION_POLYLINE_KEY, true);
 
-                    SharedPrefsManager.getInstance(getActivity()).saveListSections(SharedPrefsKeys.RACE_SECTIONS_KEY, tramos);
+                        new EncodeListPointsAsyncTask(getActivity()).execute(listPoints);
+
+                        List<Tramo> tramos = SharedPrefsManager.getInstance(getActivity()).readListSections(SharedPrefsKeys.RACE_SECTIONS_KEY);
+
+                        if (tramos == null) {
+                            tramos = new ArrayList<>();
+                        }
+
+                        tramos.add(tramo);
+
+                        SharedPrefsManager.getInstance(getActivity()).saveListSections(SharedPrefsKeys.RACE_SECTIONS_KEY, tramos);
+
+                        int raceCurrentSectionIndex = tramos.size() - 1;
+
+                        SharedPrefsManager.getInstance(getActivity()).saveInt(SharedPrefsKeys.RACE_CURRENT_SECTION_INDEX_KEY, raceCurrentSectionIndex);
+
+                        long currentFastestSectionRythmn = SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_CURRENT_FASTEST_SECTION_RYTHMN_KEY);
+
+                        if (currentRythmn < currentFastestSectionRythmn) {
+                            SharedPrefsManager.getInstance(getActivity()).saveInt(SharedPrefsKeys.RACE_CURRENT_FASTEST_SECTION_INDEX_KEY, raceCurrentSectionIndex);
+                            SharedPrefsManager.getInstance(getActivity()).saveLong(SharedPrefsKeys.RACE_CURRENT_FASTEST_SECTION_RYTHMN_KEY, currentRythmn);
+                        }
+
+                        boolean isGettingLastSectionPolyline;
+
+                        do {
+                            isGettingLastSectionPolyline = SharedPrefsManager.getInstance(getActivity()).readBoolean(SharedPrefsKeys.RACE_GETTING_LAST_SECTION_POLYLINE_KEY);
+                        } while (isGettingLastSectionPolyline);
+
+                        // REGISTER RACE
+                        registerRace();
+                    }
                 }
 
                 @Override
@@ -385,12 +335,6 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
 
                 }
             });
-
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
 
             anim.start();
 
@@ -422,7 +366,7 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
 
     /**
      * Background Runnable thread
-     * */
+     */
     private Runnable mUpdateTimerTask = new Runnable() {
         public void run() {
             initialTime = getInitialTime();
@@ -481,25 +425,22 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         carrera.setFechaCarrera(raceDate);
 
         List<Tramo> tramos = SharedPrefsManager.getInstance(getActivity()).readListSections(SharedPrefsKeys.RACE_SECTIONS_KEY);
+        Log.d(LOG_TAG, "tramos: " + tramos);
+
         // Last Race Section
-        List<Punto> puntosUltimoTramo = tramos.get(tramos.size()-1).getPuntosTramo();
+        List<Punto> puntosUltimoTramo = tramos.get(tramos.size() - 1).getPuntosTramo();
         // Last Race Point
-        puntosUltimoTramo.get(puntosUltimoTramo.size()-1).setIsLastRacePoint(true);
+        puntosUltimoTramo.get(puntosUltimoTramo.size() - 1).setIsLastRacePoint(true);
 
-        List<String> listEncodedPolylines = SharedPrefsManager.getInstance(getActivity()).readListEncodedPolylines(SharedPrefsKeys.ENCODED_POLYLINES_LIST_KEY);
+//        List<String> listEncodedPolylines = SharedPrefsManager.getInstance(getActivity()).readListEncodedPolylines(SharedPrefsKeys.ENCODED_POLYLINES_LIST_KEY);
+//
+//        for (int i = 0; i < tramos.size(); i++) {
+//            tramos.get(i).setSectionPolyline(listEncodedPolylines.get(i));
+//        }
 
-        int indiceTramoMasRapido = 0;
-        long ritmoTramoMasRapido = tramos.get(indiceTramoMasRapido).getRitmoTramo();
+        int raceFastestSectionIndex = SharedPrefsManager.getInstance(getActivity()).readInt(SharedPrefsKeys.RACE_CURRENT_FASTEST_SECTION_INDEX_KEY);
 
-        for (int i = 0; i < tramos.size(); i++) {
-            if (i > 0 && tramos.get(i).getRitmoTramo() < ritmoTramoMasRapido) {
-                ritmoTramoMasRapido = tramos.get(i).getRitmoTramo();
-                indiceTramoMasRapido = i;
-            }
-            tramos.get(i).setSectionPolyline(listEncodedPolylines.get(i));
-        }
-
-        tramos.get(indiceTramoMasRapido).setFastestSection(true);
+        tramos.get(raceFastestSectionIndex).setIsFastestSection(true);
         carrera.setTramos(tramos);
 
         if (getActivity() != null) {
@@ -525,6 +466,7 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
             }
         }
 
+//        return true;
     }
 
     private void verificarCamposVacios() throws RaceModelException {
@@ -755,7 +697,15 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         builder.setView(inflater.inflate(R.layout.dialog_register_race_question, null))
                 // Add action buttons
                 .setPositiveButton("Si", (dialog, id) -> {
-                    new RegisterRaceAsyncTask().execute();
+                    long raceCurrentDistance = SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY);
+
+                    if (raceCurrentDistance >= 500) {
+                        new RegisterRaceAsyncTask().execute();
+                    } else {
+                        dialogRaceNotRegistered = (AlertDialog) createDialogRaceNotRegistered();
+                        dialogRaceNotRegistered.setCancelable(false);
+                        dialogRaceNotRegistered.show();
+                    }
                 })
                 .setNegativeButton("No", (dialog, id) -> dialog.cancel());
         return builder.create();
@@ -769,6 +719,24 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         // Inflate and set the layout for the dialog
         // Pass null as the parent view because its going in the dialog layout
         builder.setView(inflater.inflate(R.layout.dialog_registering_race, null));
+        return builder.create();
+    }
+
+    private Dialog createDialogRaceNotRegistered() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(Objects.requireNonNull(getActivity()));
+        // Get the layout inflater
+        LayoutInflater inflater = getActivity().getLayoutInflater();
+
+        // Inflate and set the layout for the dialog
+        // Pass null as the parent view because its going in the dialog layout
+        builder.setView(inflater.inflate(R.layout.dialog_race_not_registered, null))
+                // Add action buttons
+                .setPositiveButton("Volver", (dialog, id) -> {
+                    finishRace();
+                    // Reset all race SharedPrefsKeys
+                    SharedPrefsManager.initRaceSharedPrefsKeys(getActivity());
+                    dialog.dismiss();
+                });
         return builder.create();
     }
 
@@ -786,7 +754,7 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
                         SharedPrefsManager.getInstance(getActivity()).saveString(SharedPrefsKeys.RACE_CURRENT_FIREBASE_KEY, refKey);
 
                         LocationRequest locationRequest = LocationService.buildLocationRequest();
-                        locationCallback = LocationService.buildLocationCallback(getActivity(), refKey, "");
+                        locationCallback = LocationService.buildLocationCallback(getActivity(), refKey);
 
                         LocationService.getFusedLocationProviderClientInstance(getActivity()).requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
                     }
@@ -803,7 +771,7 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         long distance = SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY);
         long rythmn = SharedPrefsManager.getInstance(getActivity()).readLong(SharedPrefsKeys.RACE_CURRENT_RYTHMN_KEY);
         if (key.equals(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY)) {
-            float distanceToKms = (distance/1000f);
+            float distanceToKms = (distance / 1000f);
             newRaceDistanceTextView.setText(String.format("%.2f", distanceToKms));
 
             if (distance >= 1000) {
@@ -823,7 +791,7 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
     @Override
     public void onCompletion(MediaPlayer mp) {
         long currentDuration = mediaPlayerManager.getMediaPlayer().getCurrentPosition();
-        long currentDurationGlobal = (currentDuration > 0) ? currentDuration: 0;
+        long currentDurationGlobal = (currentDuration > 0) ? currentDuration : 0;
 
         if (currentDurationGlobal > 0) {
             Log.d(LOG_TAG, "Song finished..");
@@ -831,8 +799,89 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         }
     }
 
+    private class StartRaceAsyncTask extends AsyncTask<Void, String, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            // Reset all race SharedPrefsKeys
+//            SharedPrefsManager.initRaceSharedPrefsKeys(getActivity());
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            publishProgress("SHOW_ANIMATION");
+
+            return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(String... values) {
+            if (values[0].equals("SHOW_ANIMATION")) {
+                newRaceDateTV.setText("");
+                newRaceDescriptionTV.setText("");
+
+                Date now = new Date();
+
+                @SuppressLint("SimpleDateFormat") SimpleDateFormat formatterTime = new SimpleDateFormat("HH:mm");
+                String dateFormattedTime = formatterTime.format(now) + " hs";
+
+                SharedPrefsManager.getInstance(getActivity()).saveBoolean(SharedPrefsKeys.IS_RUNNING_KEY, true);
+
+                SharedPrefsManager.getInstance(getActivity()).saveString(SharedPrefsKeys.LAST_UPDATE_TIME_KEY, dateFormattedTime);
+                Log.d(LOG_TAG, "HOLA" + SharedPrefsManager.getInstance(getActivity()).readString(SharedPrefsKeys.LAST_UPDATE_TIME_KEY));
+                List<Punto> puntos = new ArrayList<>();
+
+                SharedPrefsManager.getInstance(getActivity()).saveListPoints(SharedPrefsKeys.RACE_LOCATION_POINTS_KEY, puntos);
+
+                setInitialTime(now.getTime());
+
+                @SuppressLint("SimpleDateFormat") SimpleDateFormat formatterDateTime = new SimpleDateFormat("dd/MM/yyyy - HH:mm");
+
+                String dateFormattedDateTime = formatterDateTime.format(now) + " hs";
+                String raceDescription = raceDescriptionEditText.getText().toString();
+
+                raceDescriptionEditText.setText("");
+
+                newRaceDateTV.setText(dateFormattedDateTime);
+                newRaceDescriptionTV.setText(raceDescription);
+
+                SharedPrefsManager.getInstance(getActivity()).saveString(SharedPrefsKeys.RACE_DATE_STRING_KEY, dateFormattedDateTime);
+                SharedPrefsManager.getInstance(getActivity()).saveString(SharedPrefsKeys.RACE_DESCRIPTION_KEY, raceDescription);
+
+                SharedPrefsManager.getInstance(getActivity()).saveLong(SharedPrefsKeys.INITIAL_RACE_TIME_KEY, now.getTime());
+                Log.d(LOG_TAG, "fechaCarrera: " + dateFormattedDateTime);
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                int x = layoutContent.getRight();
+                int y = layoutContent.getBottom();
+
+                int startRadius = 0;
+                int endRadius = (int) Math.hypot(newRaceFragmentView.getWidth(), newRaceFragmentView.getHeight());
+
+                Animator anim = ViewAnimationUtils.createCircularReveal(layoutContent, x, y, startRadius, endRadius);
+
+                animationView.setVisibility(View.GONE);
+                relativeLayoutNewRace.setVisibility(View.GONE);
+                flStartRace.setVisibility(View.GONE);
+
+                anim.start();
+
+                layoutNewRaceData.setVisibility(View.VISIBLE);
+                flFinishRace.setVisibility(View.VISIBLE);
+                bsMusic.setVisibility(View.VISIBLE);
+
+                updateTimerUI();
+            }
+        }
+
+    }
+
     private class RegisterRaceAsyncTask extends AsyncTask<Void, String, Void> {
-        private LocationRequest locationRequest;
+//        private LocationRequest locationRequest;
 
         @Override
         protected void onPreExecute() {
@@ -853,21 +902,21 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
             Log.d(LOG_TAG, "deltaTimeMs: " + TimeUtils.milliSecondsToTimer(deltaTimeMs));
 
             if (deltaTimeMs >= 10000) {
-                String refKey = SharedPrefsManager.getInstance(getActivity()).readString(SharedPrefsKeys.RACE_CURRENT_FIREBASE_KEY);
-                String raceDuration = newRaceDurationTextView.getText().toString();
+//                String refKey = SharedPrefsManager.getInstance(getActivity()).readString(SharedPrefsKeys.RACE_CURRENT_FIREBASE_KEY);
+//                String raceDuration = newRaceDurationTextView.getText().toString();
 
                 SharedPrefsManager.getInstance(getActivity()).saveBoolean(SharedPrefsKeys.RACE_GETTING_LAST_POINT_KEY, true);
 
-                locationRequest = LocationService.buildLocationRequest();
-                locationCallback = LocationService.buildLocationCallback(getActivity(), refKey, raceDuration);
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (Objects.requireNonNull(getActivity()).checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                        LocationService.getFusedLocationProviderClientInstance(getActivity()).requestLocationUpdates(locationRequest, locationCallback, null);
-                    }
-                } else {
-                    LocationService.getFusedLocationProviderClientInstance(getActivity()).requestLocationUpdates(locationRequest, locationCallback, null);
-                }
+//                locationRequest = LocationService.buildLocationRequest();
+//                locationCallback = LocationService.buildLocationCallback(getActivity(), refKey);
+//
+//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//                    if (Objects.requireNonNull(getActivity()).checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+//                        LocationService.getFusedLocationProviderClientInstance(getActivity()).requestLocationUpdates(locationRequest, locationCallback, null);
+//                    }
+//                } else {
+//                    LocationService.getFusedLocationProviderClientInstance(getActivity()).requestLocationUpdates(locationRequest, locationCallback, null);
+//                }
             }
 
         }
@@ -895,19 +944,11 @@ public class NewRaceFragment extends Fragment implements View.OnClickListener, M
         protected void onProgressUpdate(String... values) {
             if (values[0].equals("FINISH RACE")) {
                 finishRace();
-                registerRace();
             }
         }
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            if (locationCallback != null) {
-                LocationService.getFusedLocationProviderClientInstance(getActivity()).removeLocationUpdates(locationCallback);
-            }
-
-            locationRequest = null;
-            locationCallback = null;
-
             dialogRegisteringRace.dismiss();
 
             Intent raceRegisteredIntent = new Intent(getActivity(), RaceRegisteredActivity.class);
