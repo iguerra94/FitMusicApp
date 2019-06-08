@@ -58,6 +58,18 @@ public class DetailRaceActivity extends AppCompatActivity implements OnMapReadyC
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail_race);
 
+        configureToolbar();
+
+        bindViews();
+
+        raceData = (Carrera) getIntent().getSerializableExtra("raceData");
+
+        setRaceFields(raceData);
+
+        setMap(savedInstanceState);
+    }
+
+    private void configureToolbar() {
         Toolbar myToolbarDetailActivity = findViewById(R.id.my_toolbar_detail_activity);
         setSupportActionBar(myToolbarDetailActivity);
 
@@ -65,7 +77,9 @@ public class DetailRaceActivity extends AppCompatActivity implements OnMapReadyC
 
         getSupportActionBar().setTitle(getResources().getString(R.string.toolbar_title_detail_race));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
 
+    private void bindViews() {
         mMapView = findViewById(R.id.race_detail_map);
         bsRaceInfoRaceDetail = findViewById(R.id.bs_race_info);
 
@@ -74,14 +88,6 @@ public class DetailRaceActivity extends AppCompatActivity implements OnMapReadyC
         raceDistanceTextViewRaceDetail = findViewById(R.id.raceDistanceTextViewBS);
         raceDurationTextViewRaceDetail = findViewById(R.id.raceDurationTextViewBS);
         raceRythmnTextViewRaceDetail = findViewById(R.id.raceRythmnTextViewBS);
-
-        raceData = (Carrera) getIntent().getSerializableExtra("raceData");
-
-        Log.d(LOG_TAG, raceData.getFechaCarrera().toString());
-
-        setRaceFields(raceData);
-
-        setMap(savedInstanceState);
     }
 
     private void setMap(Bundle savedInstanceState) {
@@ -111,7 +117,6 @@ public class DetailRaceActivity extends AppCompatActivity implements OnMapReadyC
 
                 }
             });
-
         } catch (InflateException e){
             Log.e(LOG_TAG, "Inflate exception");
         }

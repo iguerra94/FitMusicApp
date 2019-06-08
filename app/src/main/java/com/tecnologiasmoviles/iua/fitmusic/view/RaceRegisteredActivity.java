@@ -9,6 +9,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.tecnologiasmoviles.iua.fitmusic.R;
+import com.tecnologiasmoviles.iua.fitmusic.utils.Constants;
 import com.tecnologiasmoviles.iua.fitmusic.utils.SharedPrefsKeys;
 import com.tecnologiasmoviles.iua.fitmusic.utils.SharedPrefsManager;
 import com.tecnologiasmoviles.iua.fitmusic.utils.TimeUtils;
@@ -22,8 +23,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 public class RaceRegisteredActivity extends AppCompatActivity implements View.OnClickListener {
-
-    private static final String LOG_TAG = RaceRegisteredActivity.class.getSimpleName();
 
     private static final int TWEET_COMPOSER_REQUEST_CODE = 100;
 
@@ -40,31 +39,42 @@ public class RaceRegisteredActivity extends AppCompatActivity implements View.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_race_registered);
 
+        setupToolbar();
+
+        bindViews();
+
+        raceDistance = SharedPrefsManager.getInstance(this).readLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY);
+        raceDuration = SharedPrefsManager.getInstance(this).readString(SharedPrefsKeys.RACE_DURATION_KEY);
+
+        setFields();
+
+        Twitter.initialize(this);
+
+        // Reset all race SharedPrefsKeys
+        SharedPrefsManager.initRaceSharedPrefsKeys(this);
+    }
+
+    private void setupToolbar() {
         Toolbar toolbarRaceRegistered = findViewById(R.id.toolbar_race_registered);
         setSupportActionBar(toolbarRaceRegistered);
 
         assert getSupportActionBar() != null;
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
 
-        Twitter.initialize(this);
-
-        raceDistance = SharedPrefsManager.getInstance(this).readLong(SharedPrefsKeys.RACE_CURRENT_DISTANCE_KEY);
-        raceDuration = SharedPrefsManager.getInstance(this).readString(SharedPrefsKeys.RACE_DURATION_KEY);
-
+    private void bindViews() {
         raceDistanceTextViewRaceDetail = findViewById(R.id.raceDistanceTextViewRaceDetail);
         raceDurationTextViewRaceDetail = findViewById(R.id.raceDurationTextViewRaceDetail);
 
-        float distanceToKms = (raceDistance/1000f);
-        raceDistanceTextViewRaceDetail.setText(String.format("%.2f", distanceToKms));
-
-        raceDurationTextViewRaceDetail.setText(raceDuration);
-
         btnTweetShare = findViewById(R.id.tw_post_tweet);
         btnTweetShare.setOnClickListener(this);
+    }
 
-        // Reset all race SharedPrefsKeys
-        SharedPrefsManager.initRaceSharedPrefsKeys(this);
+    private void setFields() {
+        float distanceToKms = (raceDistance / 1000f);
+        raceDistanceTextViewRaceDetail.setText(String.format("%.2f", distanceToKms));
+        raceDurationTextViewRaceDetail.setText(raceDuration);
     }
 
     @Override
@@ -91,15 +101,17 @@ public class RaceRegisteredActivity extends AppCompatActivity implements View.On
     public void onClick(View v) {
         String durationNormalized = TimeUtils.normalizeDuration(raceDuration);
 
-        float raceDistanceToKms = (raceDistance/1000f);
+        float raceDistanceToKms = (raceDistance / 1000f);
         String raceDistanceWithFixedDecimals = String.format("%.2f", raceDistanceToKms);
 
         StringBuilder shareUrl = new StringBuilder()
-                .append("https://fitmusic-af1fe.firebaseapp.com/shareRace")
+                .append(Constants.URL.URL_BASE)
+                .append("/shareRace")
                 .append("?distance=")
                 .append(raceDistanceWithFixedDecimals)
                 .append("&duration=")
                 .append(durationNormalized);
+
         if (v.getId() == R.id.tw_post_tweet) {
             try {
                 String durationAsSentence = TimeUtils.parseDurationAsSentence(raceDuration);

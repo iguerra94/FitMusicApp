@@ -1,116 +1,115 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".view.LastRaceFragment">
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <LinearLayout
-        android:id="@+id/linearLayoutNoRaces"
+    <data>
+
+    </data>
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_centerInParent="true"
-        android:gravity="center"
-        android:orientation="vertical"
-        >
+        tools:context=".view.LastRaceFragment">
 
-        <ImageView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            app:srcCompat="@drawable/ic_sentiment_very_dissatisfied" />
-
-        <TextView
+        <LinearLayout
+            android:id="@+id/linearLayoutNoRaces"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="center"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp"
-            android:text="@string/fragment_last_race_no_races_label"
-            android:textAlignment="center"
-            android:textSize="16sp"
-            />
-
-    </LinearLayout>
-
-    <com.google.android.gms.maps.MapView
-        android:id="@+id/map"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="?attr/actionBarSize"
-        android:visibility="gone"
-        />
-
-    <LinearLayout
-        android:id="@+id/lastRaceMapToolbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="?attr/actionBarSize"
-        android:background="#aa000000"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:paddingStart="@dimen/activity_vertical_margin"
-        android:paddingEnd="@dimen/activity_vertical_margin"
-        android:orientation="horizontal"
-        android:visibility="gone">
-
-        <RelativeLayout
-            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:gravity="start"
-            android:layout_weight="1">
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:orientation="vertical">
 
             <ImageView
-                android:id="@+id/imageView4"
                 android:layout_width="40dp"
-                android:layout_centerVertical="true"
-                android:layout_height="12dp"
-                android:background="@drawable/view_rounded_fastest_section"
-                />
+                android:layout_height="40dp"
+                app:srcCompat="@drawable/ic_sentiment_very_dissatisfied" />
 
             <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:text="@string/fragment_last_race_no_races_label"
+                android:textAlignment="center"
+                android:textSize="16sp" />
+
+        </LinearLayout>
+
+        <com.google.android.gms.maps.MapView
+            android:id="@+id/map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="?attr/actionBarSize"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/lastRaceMapToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="?attr/actionBarSize"
+            android:background="#aa000000"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:paddingStart="@dimen/activity_vertical_margin"
+            android:paddingEnd="@dimen/activity_vertical_margin"
+            android:orientation="horizontal"
+            android:visibility="visible">
+
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="start"
+                android:layout_weight="1">
+
+                <ImageView
+                    android:id="@+id/imageView4"
+                    android:layout_width="40dp"
+                    android:layout_centerVertical="true"
+                    android:layout_height="12dp"
+                    android:background="@drawable/view_rounded_fastest_section" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="8dp"
+                    android:layout_toEndOf="@id/imageView4"
+                    android:text="tramo mas rapido"
+                    android:gravity="center"
+                    android:textColor="@color/colorWhite" />
+
+            </RelativeLayout>
+
+            <ImageButton
+                android:id="@+id/btnInitialLocation"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:layout_centerVertical="true"
-                android:layout_marginStart="8dp"
-                android:layout_toRightOf="@id/imageView4"
-                android:text="tramo mas rapido"
-                android:gravity="center"
-                android:textColor="@color/colorWhite" />
-
-        </RelativeLayout>
-
-        <ImageButton
-            android:id="@+id/btnInitialLocation"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:clickable="true"
-            android:padding="10dp"
-            app:srcCompat="@drawable/ic_gps_fixed_indicator"
-            />
+                android:clickable="true"
+                android:padding="10dp"
+                app:srcCompat="@drawable/ic_gps_fixed_indicator" />
 
 
+        </LinearLayout>
 
-    </LinearLayout>
+        <com.airbnb.lottie.LottieAnimationView
+            android:id="@+id/loading_race_data_in_map_animation"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_centerHorizontal="true"
+            android:layout_gravity="center"
+            app:lottie_autoPlay="true"
+            app:lottie_fileName="loading.json"
+            app:lottie_loop="true"
+            android:visibility="gone" />
 
-    <com.airbnb.lottie.LottieAnimationView
-        android:id="@+id/loading_race_data_in_map_animation"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_centerHorizontal="true"
-        android:layout_gravity="center"
-        app:lottie_autoPlay="true"
-        app:lottie_fileName="loading.json"
-        app:lottie_loop="true"
-        android:visibility="gone"
-        />
+        <include
+            android:id="@+id/bs_race_info_last_race"
+            layout="@layout/bottom_sheet_race_detail"
+            android:visibility="gone" />
 
-    <include
-        android:id="@+id/bs_race_info_last_race"
-        layout="@layout/bottom_sheet_race_detail"
-        android:visibility="gone"
-        />
-
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+</layout>

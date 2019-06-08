@@ -57,16 +57,26 @@
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_marginEnd="@dimen/dim_20_dp"
         android:background="@android:color/transparent"
-        app:srcCompat="@drawable/ic_step_backward_solid" />
+        />
 
     <ImageButton
-        android:id="@+id/btnPlayPauseNewRace"
+        android:id="@+id/btnPlayNewRace"
         android:layout_width="@dimen/dim_btn_play_pause"
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:layout_marginEnd="@dimen/dim_20_dp"
         android:background="@android:color/transparent"
-        app:srcCompat="@drawable/ic_play_solid" />
+        />
+
+    <ImageButton
+        android:id="@+id/btnPauseNewRace"
+        android:layout_width="@dimen/dim_btn_play_pause"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:layout_marginEnd="@dimen/dim_20_dp"
+        android:background="@android:color/transparent"
+        android:visibility="gone"
+        />
 
     <ImageButton
         android:id="@+id/btnStepForwardNewRace"
@@ -75,6 +85,6 @@
         android:layout_gravity="center"
         android:layout_marginEnd="@dimen/activity_horizontal_margin"
         android:background="@android:color/transparent"
-        app:srcCompat="@drawable/ic_step_forward_solid" />
+        />
 
 </LinearLayout>

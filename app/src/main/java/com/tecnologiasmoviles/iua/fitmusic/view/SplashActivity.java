@@ -18,6 +18,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.tecnologiasmoviles.iua.fitmusic.R;
+import com.tecnologiasmoviles.iua.fitmusic.utils.Constants;
 import com.tecnologiasmoviles.iua.fitmusic.utils.SharedPrefsKeys;
 import com.tecnologiasmoviles.iua.fitmusic.utils.SharedPrefsManager;
 
@@ -36,6 +37,7 @@ import java.util.List;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.databinding.DataBindingUtil;
 
 public class SplashActivity extends AppCompatActivity {
 
@@ -44,13 +46,15 @@ public class SplashActivity extends AppCompatActivity {
     private String[] permissions = {
         Manifest.permission.READ_EXTERNAL_STORAGE,
         Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        Manifest.permission.ACCESS_FINE_LOCATION,
         Manifest.permission.INTERNET
     };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_splash);
+//        setContentView(R.layout.activity_splash);
+        DataBindingUtil.setContentView(this, R.layout.activity_splash);
 
         try {
             File file = new File(getFilesDir(), "races_data.json");
@@ -64,26 +68,11 @@ public class SplashActivity extends AppCompatActivity {
         SharedPrefsManager.initRaceSharedPrefsKeys(this);
 
 //        removeRegistrationTokenFromSharedPreferences();
-//        Get token
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if(!arePermissionsEnabled()){
                 requestMultiplePermissions();
             }
-//            else {
-//                try {
-//                    Thread.sleep(1000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//
-//                boolean appIsOpened = SharedPrefsManager.getInstance(this).readBoolean(SharedPrefsKeys.APP_IS_OPENED_KEY);
-//
-//                if (appIsOpened) {
-//                    Log.d(LOG_TAG, "appIsOpened: " + appIsOpened);
-//                    goToMainActivity(this.getCurrentFocus());
-//                }
-//            }
         }
     }
 
@@ -102,8 +91,6 @@ public class SplashActivity extends AppCompatActivity {
 
             try (FileWriter writer = new FileWriter(file)) {
                 writer.write(array.toString());
-                Log.d(LOG_TAG, array.toString());
-                writer.close();
             }
         }
     }
@@ -113,8 +100,6 @@ public class SplashActivity extends AppCompatActivity {
                 .addOnSuccessListener(instanceIdResult -> {
                     String newToken = instanceIdResult.getToken();
                     String lastToken = readRegistrationTokenFromExternalStorage();
-
-                    Log.d(LOG_TAG, "Last Token: " + lastToken);
 
                     if (lastToken.isEmpty()) { // Usuario instala la app por primera vez
                         saveRegistrationTokenToFirebaseDatabase(newToken);
@@ -128,31 +113,29 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private String readRegistrationTokenFromExternalStorage() {
-        String registrationToken = "";
+        StringBuilder registrationToken = new StringBuilder();
 
         try {
             File regTokenFile = new File(Environment.getExternalStoragePublicDirectory(
-                    Environment.DIRECTORY_DOWNLOADS), "registration_token.txt");
+                    Environment.DIRECTORY_DOWNLOADS), Constants.REGISTRATION_TOKEN_FILENAME);
 
             if (regTokenFile.exists()) {
                 FileInputStream fis = new FileInputStream(regTokenFile);
 
-                if (fis != null) {
-                    InputStreamReader isr = new InputStreamReader(fis);
-                    BufferedReader buff = new BufferedReader(isr);
+                InputStreamReader isr = new InputStreamReader(fis);
+                BufferedReader buff = new BufferedReader(isr);
 
-                    String line = null;
-                    while ((line = buff.readLine()) != null) {
-                        registrationToken += line;
-                    }
-                    fis.close();
+                String line;
+                while ((line = buff.readLine()) != null) {
+                    registrationToken.append(line);
                 }
+                fis.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return registrationToken;
+        return registrationToken.toString();
     }
 
     private void saveRegistrationTokenToExternalStorage(String registrationToken) {
@@ -184,7 +167,6 @@ public class SplashActivity extends AppCompatActivity {
         DatabaseReference usersDBRef = FirebaseDatabase.getInstance().getReference().child("users");
         // save registration token in firebase database with child last_race_timestamp set to value 0 (zero).
         usersDBRef.child(registrationToken+"/last_race_date_miliseconds").setValue(0);
-        Log.d(LOG_TAG, "Save To Firebase Success!");
     }
 
     private void updateRegistrationTokenInFirebaseDatabase(String actualRegistationToken, String updatedRegistationToken) {
@@ -247,19 +229,6 @@ public class SplashActivity extends AppCompatActivity {
             }
             //all is good, continue flow
             createRegistrationToken();
-
-//            try {
-//                Thread.sleep(1000);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//
-//            boolean appIsOpened = SharedPrefsManager.getInstance(this).readBoolean(SharedPrefsKeys.APP_IS_OPENED_KEY);
-//
-//            if (appIsOpened) {
-//                Log.d(LOG_TAG, "appIsOpened: " + appIsOpened);
-//                goToMainActivity(this.getCurrentFocus());
-//            }
         }
     }
 

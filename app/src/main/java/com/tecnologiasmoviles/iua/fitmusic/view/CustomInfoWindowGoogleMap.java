@@ -14,7 +14,7 @@ public class CustomInfoWindowGoogleMap implements GoogleMap.InfoWindowAdapter {
     private Context context;
 
     public CustomInfoWindowGoogleMap(Context ctx){
-        context = ctx;
+        this.context = ctx;
     }
 
     @Override
@@ -32,5 +32,6 @@ public class CustomInfoWindowGoogleMap implements GoogleMap.InfoWindowAdapter {
 
         return view;
     }
+
 }
  

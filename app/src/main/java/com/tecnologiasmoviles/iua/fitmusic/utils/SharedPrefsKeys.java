@@ -28,4 +28,11 @@ public class SharedPrefsKeys {
     public static final String RACE_CURRENT_SECTION_INDEX_KEY = "race_current_section_index";
     public static final String RACE_CURRENT_FASTEST_SECTION_RYTHMN_KEY = "race_current_fastest_section_rythmn";
     public static final String RACE_GETTING_LAST_SECTION_POLYLINE_KEY = "race_getting_last_section_polyline";
+    public static final String LAST_RACE_ID_KEY = "last_race_id";
+    public static final String LAST_RACE_MAP_BOUNDS_KEY = "last_race_map_bounds";
+    public static final String LIST_SONGS_KEY = "list_songs";
+    public static final String IS_LOADING_MUSIC_KEY = "is_loading_music";
+    public static final String IS_RACE_FINISHING_KEY = "is_race_finishing";
+    public static final String MEDIA_PLAYER_PLAYING_KEY = "media_player_playing";
+    public static final String MEDIA_PLAYER_PAUSED_KEY = "media_player_paused";
 }

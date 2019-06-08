@@ -3,10 +3,12 @@ package com.tecnologiasmoviles.iua.fitmusic.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.tecnologiasmoviles.iua.fitmusic.BuildConfig;
 import com.tecnologiasmoviles.iua.fitmusic.model.Punto;
+import com.tecnologiasmoviles.iua.fitmusic.model.Song;
 import com.tecnologiasmoviles.iua.fitmusic.model.Tramo;
 
 import java.util.List;
@@ -23,8 +25,10 @@ public class SharedPrefsManager {
         if (instance == null) {
             instance = new SharedPrefsManager();
         }
-        sharedPreferences = context.getSharedPreferences(BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
-        editor = sharedPreferences.edit();
+        if (context != null) {
+            sharedPreferences = context.getSharedPreferences(BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
+            editor = sharedPreferences.edit();
+        }
         return instance;
     }
 
@@ -134,6 +138,40 @@ public class SharedPrefsManager {
         List<String> encodedPolylinesList = gson.fromJson(response, new TypeToken<List<String>>() {}.getType());
 
         return encodedPolylinesList;
+    }
+
+    public LatLngBounds readLatLngBounds(String KEY) {
+        Gson gson = new Gson();
+
+        String response = sharedPreferences.getString(KEY, "");
+        LatLngBounds bounds = gson.fromJson(response, new TypeToken<LatLngBounds>() {}.getType());
+
+        return bounds;
+    }
+
+    public void saveLatLngBounds(String KEY, LatLngBounds bounds) {
+        Gson gson = new Gson();
+        String json = gson.toJson(bounds);
+
+        editor.putString(KEY, json);
+        editor.apply();
+    }
+
+    public List<Song> readListSongs(String KEY) {
+        Gson gson = new Gson();
+
+        String response = sharedPreferences.getString(KEY, "");
+        List<Song> songList = gson.fromJson(response, new TypeToken<List<Song>>() {}.getType());
+
+        return songList;
+    }
+
+    public void saveListSongs(String KEY, List<Song> songList) {
+        Gson gson = new Gson();
+        String json = gson.toJson(songList);
+
+        editor.putString(KEY, json);
+        editor.apply();
     }
 
     public static void initRaceSharedPrefsKeys(Context context) {

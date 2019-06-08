@@ -1,6 +1,7 @@
 package com.tecnologiasmoviles.iua.fitmusic.utils;
 
 import android.content.ContentResolver;
+import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
@@ -65,16 +66,16 @@ public class SongUtils {
         return songList;
     }
 
-    public static List<Song> getMusicFromFirebase() {
-        List<Song> songList = new ArrayList<>();
-
+    public static void getMusicFromFirebase(Context context, FinishedLoadingMusicCallback finishedLoadingMusicCallback) {
         FirebaseFirestore firestore = FirebaseFirestore.getInstance();
 
         firestore.collection(SONGS_COLLECTION_KEY)
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
+                        List<Song> songList = new ArrayList<>();
                         int id = 0;
+
                         for (QueryDocumentSnapshot document : Objects.requireNonNull(task.getResult())) {
                             String title = document.getString("title");
                             String artist = document.getString("artist");
@@ -85,14 +86,15 @@ public class SongUtils {
                             Song s = new Song(++id, title, artist, 0, songCoverUri, songUri, songDurationMs);
                             songList.add(s);
                         }
+                        finishedLoadingMusicCallback.onFinishedLoadingMusicCallback(songList);
                     } else {
                         Log.w(LOG_TAG, "Error getting documents.", task.getException());
                     }
                 });
-        for (Song s: songList) {
-            Log.d(LOG_TAG, s.toString());
-        }
-        return songList;
+    }
+
+    public interface FinishedLoadingMusicCallback {
+        void onFinishedLoadingMusicCallback(List<Song> songs);
     }
 
     private static String getAlbumArtUri(int albumId, ContentResolver cResolver) {
@@ -112,5 +114,6 @@ public class SongUtils {
         }
         return currentAlbumArt;
     }
+
 
 }

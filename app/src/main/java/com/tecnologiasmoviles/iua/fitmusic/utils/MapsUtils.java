@@ -25,6 +25,7 @@ import com.tecnologiasmoviles.iua.fitmusic.R;
 import com.tecnologiasmoviles.iua.fitmusic.model.Punto;
 import com.tecnologiasmoviles.iua.fitmusic.view.CustomInfoWindowGoogleMap;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -195,8 +196,6 @@ public class MapsUtils {
         String distanceString = String.format("%.2f", distanceToKms) +  " km";
 
         IconGenerator iconFactory = new IconGenerator(context);
-//        iconFactory.setRotation(270);
-//        iconFactory.setContentRotation(-270);
         MapsUtils.addIcon(iconFactory, MapsUtils.makeCharSequence(distanceString),
                 new LatLng(lastSectionPoint.getLat(), lastSectionPoint.getLon()),
                 googleMap);
@@ -209,16 +208,39 @@ public class MapsUtils {
     public static String createUrlWaypoints(List<LatLng> points, boolean optimize) {
         StringBuilder url = new StringBuilder();
 
-        if (points.isEmpty()) {
-            return "";
-        }
+//        if (points.isEmpty()) {
+//            return "";
+//        }
 
         if (optimize) {
-            int[] indexes;
+            List<Integer> indexes = new ArrayList<>();
             if (points.size() % 2 == 0) {
-                indexes = new int[]{0,1,(points.size()/2)-1, points.size()/2,points.size()-2,points.size()-1};
+                indexes.add(0);
+                if (points.size() > 6) {
+                    indexes.add(1);
+                }
+                if (points.size() > 4) {
+                    indexes.add((points.size()/2)-1);
+                    indexes.add(points.size()/2);
+                }
+                if (points.size() > 6) {
+                    indexes.add(points.size()-2);
+                }
+                indexes.add(points.size()-1);
             } else {
-                indexes = new int[]{0,1,points.size()/2,points.size()-2,points.size()-1};
+                indexes.add(0);
+                if (points.size() > 5) {
+                    indexes.add(1);
+                }
+                if (points.size() > 3) {
+                    indexes.add(points.size()/2);
+                }
+                if (points.size() > 5) {
+                    indexes.add(points.size()-2);
+                }
+                if (points.size() > 1) {
+                    indexes.add(points.size()-1);
+                }
             }
             for (int index : indexes) {
                 url.append("|").append(createUrl(points.get(index)));

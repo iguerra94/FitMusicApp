@@ -63,7 +63,7 @@ public class RacesListFragment extends Fragment {
             File file = new File(getActivity().getFilesDir(), "races_data.json");
             InputStream stream = new FileInputStream(file);
 
-            List<Carrera> carreras = RacesJSONParser.getRacesJSONStream(stream);
+//            List<Carrera> carreras = RacesJSONParser.getRacesJSONStream(stream);
 
 //            if (carreras.size() > 0) {
 //                linearLayoutNoRaces.setVisibility(View.GONE);

@@ -62,7 +62,8 @@ public class MyNotificationManager {
                 .setSmallIcon(R.drawable.ic_stat_fit_music_icon_round)
                 .setStyle(style)
                 .setColor(mCtx.getResources().getColor(R.color.colorPrimary))
-                .setSound(defaultSoundUri);
+                .setSound(defaultSoundUri)
+                .setAutoCancel(true);
 
         Intent intent = new Intent(mCtx, SplashActivity.class);
 
